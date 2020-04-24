@@ -1,5 +1,4 @@
-#!/usr/bin/python3
-
+#!/usr/bin/python3 
 import gspread
 from google.oauth2.service_account import Credentials
 
@@ -45,13 +44,21 @@ def set_columns(sheet, columns):
     ws = sheet.get_worksheet(0)
     ws.update('A1', [columns], value_input_option="RAW")
 
+    last_col = chr(ord('A') + len(columns))
+
+    ws.format('A1:{}1'.format(last_col), {'textFormat': {'bold': True, "fontSize": 10}, "backgroundColor": { "red": 0.7, "green": 0.8, "blue": 1.0 }}) 
 
 
-def append_row(sheet, values):
+
+def append_row(sheet, values, highlight=False):
     """ Appends a row of values (one for each of the columns we provided to set_columns. """
     ws = sheet.get_worksheet(0)
 
     # The 'USER_ENTERED' flag means that things like dates and times will be picked up as such by the spreadsheet.
     # If we used the default value (or 'RAW') it would treat dates as strings.
-    ws.append_row(values, value_input_option='USER_ENTERED')
-    
+    rc = ws.append_row(values, value_input_option='USER_ENTERED')
+
+    if highlight:
+        cells = rc['updates']['updatedRange']
+        cells = cells[cells.index('!') + 1:]
+        ws.format(cells, {"backgroundColor": { "red": 0.9, "green": 0.9, "blue": 0.9 }})

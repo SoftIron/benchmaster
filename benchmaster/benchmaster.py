@@ -68,27 +68,32 @@ def _print_results(columns, rows):
 
 
 
-def _add_results_to_sheet(sheet, id, name, description, columns, rows):
+def _add_results_to_sheet(sheet, id, size, workers, gateways, name, description, columns, rows):
     """ Add the results to our spreadsheet (if we have one). """
     
     if sheet is None:
         print("No spreadsheet in use, skipping upload.")
         return
 
+    print("Updating google spreadsheet")
+
     time = datetime.now()
 
     # Build up a list of columns - not just the columns we got back as results, but metadata too.
-    scols = ['ID']
+    scols = ['ID', 'Object Size', 'Workers', 'Gateways']
     scols.extend(c[0] for c in columns)
     scols.extend(['Name', 'Description', 'Time'])
     spreadsheet.set_columns(sheet, scols)
 
     # Write the rows
+    first = True
     for r in rows:
-        srow = [id]
+        srow = [id, size, workers, gateways]
         srow.extend(r[c[1]] for c in columns)
         srow.extend([name, description, time.strftime("%m/%d/%Y %H:%M:%S")])
-        spreadsheet.append_row(sheet, srow)
+        spreadsheet.append_row(sheet, srow, highlight=first)
+        first = False
+
 
 
 def _handle_run(args):
@@ -139,7 +144,7 @@ def _handle_run(args):
                ('100% Res Time', '100%-ResTime')]
 
     _print_results(columns, rows)
-    _add_results_to_sheet(sheet, id, name, description, columns, rows)
+    _add_results_to_sheet(sheet, id, size, workers, len(gateways), name, description, columns, rows)
 
     print("\nDone")
 
@@ -151,5 +156,4 @@ if __name__ == "__main__":
     if args['s3']:    _handle_s3(args)
     if args['sheet']: _handle_sheet(args)
     if args['run']:   _handle_run(args)
-
 
