@@ -81,15 +81,13 @@ def _add_results_to_sheet(sheet, id, name, description, columns, rows):
     scols = ['ID']
     scols.extend(c[0] for c in columns)
     scols.extend(['Name', 'Description', 'Time'])
-    print(scols)
     spreadsheet.set_columns(sheet, scols)
 
     # Write the rows
     for r in rows:
         srow = [id]
         srow.extend(r[c[1]] for c in columns)
-        srow.extend([name, description, time.strftime("%d/%m/%Y-%H:%M:%S")])
-        print(srow)
+        srow.extend([name, description, time.strftime("%m/%d/%Y %H:%M:%S")])
         spreadsheet.append_row(sheet, srow)
 
 
@@ -106,6 +104,10 @@ def _handle_run(args):
     name = args['<name>']
     description = args['<description>']
     gateways = args['<gateway>']
+
+    if workers > ops:
+        print("Workers must be less than the number of operations")
+        exit(-1)
 
     gconn = None
     sheet = None

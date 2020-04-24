@@ -136,11 +136,33 @@ def _ms_format(num):
 
 
 
+def _match_at_least_one(value, patterns, case_sensitive=True):
+    """ Return true if the value matches at least one of the regex patterns."""
+
+    flags = 0
+    if not case_sensitive:
+        flags = re.IGNORECASE
+
+    for p in patterns:
+        if re.search(p, value, flags) is not None:
+            return True
+
+    return False
+
+
+
 def _process_results(filename):
     """ Gather the results from the file and return them as a list of rows, each of which is a list of maps. """
 
-    of_interest = {'Bandwidth': _rate_format_bits, '100%-ResTime': _ms_format}
-    averaged = ["100%-ResTime"]
+    # A set of regexes that we match against stage names.  We only record details for a stage if at least one matches.
+    stages_of_interest = ['read', 'write']
+
+    # The names of the fields we are interested in, mapping to the formatting functions we want to use for them.
+    fields_of_interest = {'Bandwidth': _rate_format_bits, '100%-ResTime': _ms_format}
+
+    # A list of fields that we want to average rather than accumulate.
+    fields_to_average = ["100%-ResTime"]
+
     totals = {}
     counts = {}
     
@@ -148,23 +170,23 @@ def _process_results(filename):
         csv_reader = csv.DictReader(f)
 
         for row in csv_reader:
-            for key in of_interest.keys():
+            for key in fields_of_interest.keys():
                 if key in row:
                     stage = row["Stage"]
-                    if stage not in totals:
-                        totals[stage] = {}
-                        counts[stage] = {}
+                    if _match_at_least_one(stage, stages_of_interest, case_sensitive=False):
+                        if stage not in totals:
+                            totals[stage] = {}
+                            counts[stage] = {}
 
-                    if key not in totals[stage]:
-                        totals[stage][key] = 0
-                        counts[stage][key] = 0
+                        if key not in totals[stage]:
+                            totals[stage][key] = 0
+                            counts[stage][key] = 0
 
-                    try:
-                        totals[stage][key] += float(row[key])
-                        counts[stage][key] += 1
-                    except:
-                        pass
-       
+                        try:
+                            totals[stage][key] += float(row[key])
+                            counts[stage][key] += 1
+                        except:
+                            pass
 
     results = [] 
 
@@ -173,12 +195,12 @@ def _process_results(filename):
         row['Stage'] = stage;
 
         for key, value in values.items():
-            if key in averaged:
+            if key in fields_to_average:
                 count = counts[stage][key]
                 if count != 0:
                     value = value / count
 
-            fn = of_interest[key]
+            fn = fields_of_interest[key]
             if fn is not None:
                 value = fn(value)
             

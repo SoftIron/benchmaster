@@ -50,5 +50,8 @@ def set_columns(sheet, columns):
 def append_row(sheet, values):
     """ Appends a row of values (one for each of the columns we provided to set_columns. """
     ws = sheet.get_worksheet(0)
-    ws.append_row(values)
+
+    # The 'USER_ENTERED' flag means that things like dates and times will be picked up as such by the spreadsheet.
+    # If we used the default value (or 'RAW') it would treat dates as strings.
+    ws.append_row(values, value_input_option='USER_ENTERED')
     
