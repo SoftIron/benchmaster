@@ -44,7 +44,7 @@ def set_columns(sheet, columns):
     ws = sheet.get_worksheet(0)
     ws.update('A1', [columns], value_input_option="RAW")
 
-    last_col = chr(ord('A') + len(columns))
+    last_col = chr(ord('A') + len(columns) - 1)
 
     ws.format('A1:{}1'.format(last_col), {'textFormat': {'bold': True, "fontSize": 10}, "backgroundColor": { "red": 0.7, "green": 0.8, "blue": 1.0 }}) 
 
