@@ -11,6 +11,7 @@ import time
 
 from datetime import datetime
 
+_cosbench_dir = 'cosbench_0.4.2.c4'
 
 
 def _header(test_name, time, access_key, secret_key, gateway, port):
@@ -136,12 +137,15 @@ def _ms_format(num):
 
 
 def _process_results(filename):
-    with open(filename) as results:
-        csv_reader = csv.DictReader(results)
-        of_interest = {'Bandwidth': _rate_format_bits, '100%-ResTime': _ms_format}
-        averaged = ["100%-ResTime"]
-        totals = {}
-        counts = {}
+    """ Gather the results from the file and return them as a list of rows, each of which is a list of maps. """
+
+    of_interest = {'Bandwidth': _rate_format_bits, '100%-ResTime': _ms_format}
+    averaged = ["100%-ResTime"]
+    totals = {}
+    counts = {}
+    
+    with open(filename) as f:
+        csv_reader = csv.DictReader(f)
 
         for row in csv_reader:
             for key in of_interest.keys():
@@ -158,49 +162,53 @@ def _process_results(filename):
                     try:
                         totals[stage][key] += float(row[key])
                         counts[stage][key] += 1
-                        t = totals[stage][key]
-                        c = counts[stage][key]
-                        v = float(row[key]) 
                     except:
                         pass
+       
+
+    results = [] 
+
+    for stage, values in totals.items():
+        row = {}
+        row['Stage'] = stage;
+
+        for key, value in values.items():
+            if key in averaged:
+                count = counts[stage][key]
+                if count != 0:
+                    value = value / count
+
+            fn = of_interest[key]
+            if fn is not None:
+                value = fn(value)
+            
+            row[key] = str(value)
         
-        for stage, values in totals.items():
-            line = "Stage: %-20s" % stage
-            for key, value in values.items():
-                line += " " + key + ": "
+        results.append(row)
 
-                if key in averaged:
-                    count = counts[stage][key]
-                    if count != 0:
-                        value = value / count
-
-                fn = of_interest[key]
-                if fn is None:
-                    line += "%-20s" % str(value)
-                else:
-                    line += "%-20s" % str(fn(value))
-
-            print(line)
+    return results
 
 
 
-def run_test(test_file):
-    """ Run a test, blocking until it completes or fails. """
+def submit(test_file):
+    """ Submit a test to cosbench.  We return the Cosbench ID for the job so it can be cancelled etc... """
 
-    cosbench_dir = 'cosbench_0.4.2.c4'
-
-    cmd = ['{}/cli.sh'.format(cosbench_dir), 'submit', '{}'.format(test_file)]
+    cmd = ['{}/cli.sh'.format(_cosbench_dir), 'submit', '{}'.format(test_file)]
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout = result.stdout.decode('utf-8')
     
-    cosbench_id = stdout.split(": ")[1].rstrip("\n")
+    return stdout.split(": ")[1].rstrip("\n")
 
-    print("Submitted with ID: {}.  Waiting for completion...".format(cosbench_id))
 
-    while not glob.glob("{}/archive/{}-*".format(cosbench_dir, cosbench_id)):
+
+def wait_for_results(cosbench_id):
+    """ Wait for the job to complete (or fail) and then return the results as a list of rows, each 
+        of which is a map from field name to value. """
+
+    while not glob.glob("{}/archive/{}-*".format(_cosbench_dir, cosbench_id)):
         time.sleep(2)
-
-    filepaths = glob.glob(os.path.join("{}/archive".format(cosbench_dir), '*{0}*/*{0}*.csv'.format(cosbench_id, cosbench_id)))
+    
+    filepaths = glob.glob(os.path.join("{}/archive".format(_cosbench_dir), '*{0}*/*{0}*.csv'.format(cosbench_id, cosbench_id)))
 
     filtered = []
     for fp in filepaths:
@@ -217,5 +225,5 @@ def run_test(test_file):
         print("Can't find a result CSV file for: {}".format(cosbench_id))
         exit(-1)
 
-    _process_results(filtered[0])
+    return _process_results(filtered[0])
     

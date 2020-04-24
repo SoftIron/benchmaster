@@ -3,26 +3,6 @@
 import gspread
 from google.oauth2.service_account import Credentials
 
-# Connect to and open spreadsheet
-
-"""
-def connect_google_sheet(key):
-    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    credentials = Credentials.from_service_account_file('google-creds.json', scopes=scope)
-    gc = gspread.authorize(credentials)
-    return gc.open_by_key(key)
-
-
-spreadsheet = connect_google_sheet('1CgtEvHIijdc_lzzg5dDdGYg3Np3MIi8lOUVxkhjj9bU')
-test = { 'id':"NYAN", 'name':"64K Page Size", 'reads': 500, 'writes': 100, 'latency': 6 }
-
-ws = spreadsheet.get_worksheet(0)
-
-ws.append_row(list(test.values()))
-
-print(ws.row_values(1))
-print(ws.row_values(2))
-"""
 
 
 def connect(credentials_file):
@@ -60,3 +40,15 @@ def open(gconn, sheet_name):
 
 
 
+def set_columns(sheet, columns):
+    """ Sets the column titles """
+    ws = sheet.get_worksheet(0)
+    ws.update('A1', [columns], value_input_option="RAW")
+
+
+
+def append_row(sheet, values):
+    """ Appends a row of values (one for each of the columns we provided to set_columns. """
+    ws = sheet.get_worksheet(0)
+    ws.append_row(values)
+    
