@@ -6,6 +6,7 @@ import json
 import numbers
 import os
 import re
+import s3
 import subprocess
 import time
 
@@ -71,20 +72,6 @@ def _footer():
 
 
 
-def _load_keys(filename):
-    """ Load the S3 keys from a json file. """
-
-    try:
-        with open(filename) as json_file:
-            data = json.load(json_file)
-            secret_key = data['secret_key']
-            access_key = data['access_key']
-            return (secret_key, access_key)
-    except:
-        print("Unable to read keys from file: " + filename)
-        exit(-1)
-
-
 
 def generate_test(name, testfile, keyfile, size, workers, ops, gateways, port):
     """ Generate a single XML test file for Cosbench."""
@@ -94,7 +81,7 @@ def generate_test(name, testfile, keyfile, size, workers, ops, gateways, port):
         print("Invalid object size: {}.  Sizes should digitas followed by K, M or G.".format(size))
         exit(-1) 
 
-    secret_key, access_key = _load_keys(keyfile)
+    secret_key, access_key = s3.load_keys(keyfile)
     
     # Generate the data
     workers_per_gw = int(workers / len(gateways))

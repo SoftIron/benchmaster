@@ -6,6 +6,7 @@ Usage:
     benchmaster.py s3 adduser [--keyfile=<output>]<name>  
     benchmaster.py sheet [--credentials=<file>] create <sheetname> <account> ...
     benchmaster.py run [options] <name> <description> <gateway> ...
+    benchmaster.py test-write <bucket> <gateway>
     benchmaster.py -h | --help
 
     -h --help           Show usage
@@ -19,6 +20,8 @@ Usage:
     --sheet NAME        Google spreadsheet name to which we will upload results.  
 """
 
+import boto
+import boto.s3.connection
 import cosbench
 import json
 import re
@@ -29,6 +32,32 @@ import s3
 
 from docopt import docopt
 from datetime import datetime
+
+
+def _handle_test_write(args):
+
+    keyfile = args['--keyfile']
+    bucket_name = args['<bucket>']
+    gateway = args['<gateway>'][0]
+
+    secret_key, access_key = s3.load_keys(keyfile)
+
+    conn = boto.connect_s3(
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+            host = gateway,
+            port = 7480,
+            is_secure=False,
+            calling_format = boto.s3.connection.OrdinaryCallingFormat(),
+    )
+
+    print("Connected")
+
+    conn.create_bucket(bucket_name)
+
+    bucket = conn.get_bucket(bucket_name)
+    key = bucket.new_key("FooTheWomble")
+    key.set_contents_from_string("Bar Squiggle Aardvark")
 
 
 
@@ -156,4 +185,5 @@ if __name__ == "__main__":
     if args['s3']:    _handle_s3(args)
     if args['sheet']: _handle_sheet(args)
     if args['run']:   _handle_run(args)
+    if args['test-write']:   _handle_test_write(args)
 
