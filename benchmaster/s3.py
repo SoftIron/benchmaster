@@ -3,6 +3,20 @@ import subprocess
 import sys
 
 
+def load_keys(filename):
+    """ Load the S3 keys from a json file. """
+
+    try:
+        with open(filename) as json_file:
+            data = json.load(json_file)
+            secret_key = data['secret_key']
+            access_key = data['access_key']
+            return (secret_key, access_key)
+    except:
+        print("Unable to read keys from file: " + filename)
+        exit(-1)
+
+
 def add_user(username, keyfile):
     """ Adds a user to the rados gatweays, and writes the resulting key to s3.keys.
         We exit on failure. """
@@ -11,7 +25,7 @@ def add_user(username, keyfile):
     cmd =['radosgw-admin', 'user', 'create', '--uid={}'.format(username), '--display-name={}'.format(username)] 
     try:
         out = subprocess.run(cmd, capture_output=True, check=True)
-    except CallProccessErrori as e:
+    except CallProcessError as e:
         print("Failure adding user to rados gateway: {}".format(e))
         exit(-1)
 
