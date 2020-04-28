@@ -12,7 +12,7 @@ import time
 
 from datetime import datetime
 
-_cosbench_dir = 'cosbench_0.4.2.c4'
+_cosbench_dir = '/root/cosbench_0.4.2.c4'
 
 
 def _header(test_name, time, access_key, secret_key, gateway, port):
