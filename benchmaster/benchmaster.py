@@ -3,10 +3,10 @@
 """Welcome to the Benchmaster 5000, for all your benchmarking needs.
 
 Usage:
-    benchmaster.py s3 adduser [--keyfile=<output>]<name>  
+    benchmaster.py s3 adduser [--keyfile=<output>] <name>
     benchmaster.py sheet [--credentials=<file>] create <sheetname> <account> ...
     benchmaster.py run [options] <name> <description> <gateway> ...
-    benchmaster.py test-write <bucket> <gateway>
+    benchmaster.py test-write [--keyfile=<input>] [--port=<port>] <bucket> <gateway>
     benchmaster.py -h | --help
 
     -h --help           Show usage
