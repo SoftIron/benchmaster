@@ -37,7 +37,7 @@ from datetime import datetime
 def _handle_test_write(args):
 
     keyfile = args['--keyfile']
-    port = args['--port']
+    port = int(args['--port'])
     bucket_name = args['<bucket>']
     gateway = args['<gateway>'][0]
 
