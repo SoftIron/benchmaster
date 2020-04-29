@@ -37,6 +37,7 @@ from datetime import datetime
 def _handle_test_write(args):
 
     keyfile = args['--keyfile']
+    port = args['--port']
     bucket_name = args['<bucket>']
     gateway = args['<gateway>'][0]
 
@@ -46,7 +47,7 @@ def _handle_test_write(args):
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
             host = gateway,
-            port = 7480,
+            port = port,
             is_secure=False,
             calling_format = boto.s3.connection.OrdinaryCallingFormat(),
     )
