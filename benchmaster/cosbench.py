@@ -15,36 +15,53 @@ from datetime import datetime
 _cosbench_dir = '/root/cosbench_0.4.2.c4'
 
 
-def _header(test_name, time, access_key, secret_key, gateway, port):
-    url = "http://{}:{}".format(gateway, port)
+def _build_url(protocol, host, port):
+    """ Protocol and port are optional """
 
+    url = ""
+
+    if protocol is not None:
+        url = "{}://".format(protocol)
+
+    url = "{}{}".format(url, host)
+
+    if port is not None:
+        url = "{}:{}".format(url, port)
+
+    return url
+
+
+
+def _header(storage_type, test_name, time, access_key, secret_key, target, protocol, port):
+    url = _build_url(protocol, target, port)
     result =  '<?xml version="1.0" encoding="UTF-8"?>\n'
     result += '<workload name="{}" description="SoftIron Test Generated {}" config="">\n'.format(test_name, time)
-    result += '  <storage type="s3" config="path_style_access=true;accesskey={};secretkey={};endpoint={}"/>\n'.format(access_key, secret_key, url)
+    result += '  <storage type="{}" config="path_style_access=true;accesskey={};secretkey={};endpoint={}"/>\n'.format(storage_type, access_key, secret_key, url)
     result += '  <workflow>\n\n'
     return result
    
 
  
-def _bucket_creation(buckets):
-    result =  '    <!-- Bucket Creation Workstage: creates {} Bucket-->\n'.format(buckets)
+def _bucket_creation(bucket_prefix, bucket_count):
+    result =  '    <!-- Bucket Creation Workstage: creates {} Bucket-->\n'.format(bucket_count)
     result += '    <workstage name="bucket-create">\n'
-    result += '      <work type="init" workers="1" config="cprefix=softironcosbench;containers=r(1,{})" />\n'.format(buckets)
+    result += '      <work type="init" workers="1" config="cprefix={};containers=r(1,{})" />\n'.format(bucket_prefix, bucket_count)
     result += '    </workstage>\n\n'
     return result
 
 
 
-def _work(test_type, buckets, objects, workers, operations, access_key, secret_key, gateways, port):
+def _work(storage_type, test_type, objects, workers, operations, access_key, secret_key, targets, protocol, port, bucket_prefix, bucket_count):
     result =  '    <!-- {} Workstage -->\n'.format(test_type)
     result += '    <workstage name="{}">\n'.format(test_type)
    
-    for gw in gateways: 
-        url = "http://{}:{}".format(gw, port)
-        result += '      <work name="{}-{}" workers="{}" division="container" totalOps="{}">\n'.format(test_type, gw, workers, operations)
-        result += '        <storage type="s3" config="path_style_access=true;accesskey={};secretkey={}'.format(access_key, secret_key)
+    for t in targets: 
+        url = _build_url(protocol, t, port)
+
+        result += '      <work name="{}-{}" workers="{}" division="container" totalOps="{}">\n'.format(test_type, t, workers, operations)
+        result += '        <storage type="{}" config="path_style_access=true;accesskey={};secretkey={}'.format(storage_type, access_key, secret_key)
         result += ';endpoint={}"/>\n'.format(url)
-        result += '        <operation type="{}" ratio="100" config="cprefix=softironcosbench;containers=c({})'.format(test_type, buckets)
+        result += '        <operation type="{}" ratio="100" config="cprefix={};containers=c({})'.format(test_type, bucket_prefix, bucket_count)
         result += ';oprefix=Target1-;objects=r(1,4999);sizes=c({}){}B;content=zero"/>\n'.format(objects[:-1], objects[-1:])
         result += '      </work>\n\n'
     
@@ -53,17 +70,17 @@ def _work(test_type, buckets, objects, workers, operations, access_key, secret_k
 
 
 
-def _cleanup(workers, buckets):
+def _cleanup(workers, bucket_prefix, bucket_count):
     return ('    <workstage name="cleanup">\n'
-            '      <work type="cleanup" workers="{}" config="cprefix=softironcosbench;containers=r(1,{});oprefix=Target1-;objects=r(1,4999);" />\n'
-            '    </workstage>\n\n').format(workers, buckets)
+            '      <work type="cleanup" workers="{}" config="cprefix={};containers=r(1,{});oprefix=Target1-;objects=r(1,4999);" />\n'
+            '    </workstage>\n\n').format(workers, bucket_prefix, bucket_count)
 
 
 
-def _dispose(buckets):
+def _dispose(bucket_prefix, bucket_count):
     return ('    <workstage name="dispose">\n'
-            '      <work type="dispose" workers="1" config="cprefix=softironcosbench;containers=r(1,{})" />\n'
-            '    </workstage>\n\n').format(buckets)
+            '      <work type="dispose" workers="1" config="cprefix={};containers=r(1,{})" />\n'
+            '    </workstage>\n\n').format(bucket_prefix, bucket_count)
 
 
 
@@ -73,7 +90,7 @@ def _footer():
 
 
 
-def generate_test(name, testfile, keyfile, size, workers, ops, gateways, port):
+def generate_test(storage_type, name, testfile, secret_key, access_key, size, workers, ops, targets, bucket_prefix, protocol, port, do_create, do_dispose):
     """ Generate a single XML test file for Cosbench."""
 
     # Check that size is in the correct format
@@ -81,20 +98,24 @@ def generate_test(name, testfile, keyfile, size, workers, ops, gateways, port):
         print("Invalid object size: {}.  Sizes should digitas followed by K, M or G.".format(size))
         exit(-1) 
 
-    secret_key, access_key = s3.load_keys(keyfile)
-    
     # Generate the data
-    workers_per_gw = int(workers / len(gateways))
+    workers_per_target = int(workers / len(targets))
     time = datetime.now()
-    bucket = 1
+    bucket_count = 1
 
     with open(testfile, "w") as f:
-        f.write(_header(name, time, access_key, secret_key, gateways[0], port))
-        f.write(_bucket_creation(bucket))
-        f.write(_work("write", bucket, size, workers_per_gw, ops, access_key, secret_key, gateways, port))
-        f.write(_work("read", bucket, size, workers_per_gw, ops, access_key, secret_key, gateways, port))
-        f.write(_cleanup(workers_per_gw, bucket))
-        f.write(_dispose(bucket))
+        f.write(_header(storage_type, name, time, access_key, secret_key, targets[0], protocol, port))
+
+        if do_create:
+            f.write(_bucket_creation(bucket_prefix, bucket_count))
+
+        f.write(_work(storage_type, "write", size, workers_per_target, ops, access_key, secret_key, targets, protocol, port, bucket_prefix, bucket_count))
+        f.write(_work(storage_type, "read", size, workers_per_target, ops, access_key, secret_key, targets, protocol, port, bucket_prefix, bucket_count))
+        f.write(_cleanup(workers_per_target, bucket_prefix, bucket_count))
+        
+        if do_dispose:
+            f.write(_dispose(bucket_prefix, bucket_count))
+
         f.write(_footer())
 
 
