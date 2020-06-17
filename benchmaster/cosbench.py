@@ -12,7 +12,7 @@ import time
 
 from datetime import datetime
 
-_cosbench_dir = '/root/cosbench_0.4.2.c4'
+_cosbench_dir = '/usr/share/cosbench'
 
 
 def _build_url(protocol, host, port):

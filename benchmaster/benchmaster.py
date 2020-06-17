@@ -62,7 +62,7 @@ def _print_results(columns, rows):
 
 
 
-def _add_results_to_sheet(sheet, id, size, workers, gateways, name, description, columns, rows):
+def _add_results_to_sheet(sheet, id, storage_type, size, workers, gateways, name, description, columns, rows):
     """ Add the results to our spreadsheet (if we have one). """
     
     if sheet is None:
@@ -74,7 +74,7 @@ def _add_results_to_sheet(sheet, id, size, workers, gateways, name, description,
     time = datetime.now()
     
     # Build up a list of columns - not just the columns we got back as results, but metadata too.
-    scols = ['ID', 'Object Size', 'Workers', 'Gateways/Monitors']
+    scols = ['ID', 'Storage Type', 'Object Size', 'Workers', 'Gateways/Monitors']
     scols.extend(c[0] for c in columns)
     scols.extend(['Name', 'Description', 'Time'])
     spreadsheet.set_columns(sheet, scols)
@@ -82,7 +82,7 @@ def _add_results_to_sheet(sheet, id, size, workers, gateways, name, description,
     # Write the rows
     first = True
     for r in rows:
-        srow = [id, size, workers, gateways]
+        srow = [id, storage_type, size, workers, gateways]
         srow.extend(r[c[1]] for c in columns)
         srow.extend([name, description, time.strftime("%m/%d/%Y %H:%M:%S")])
         spreadsheet.append_row(sheet, srow, highlight=first)
@@ -135,7 +135,7 @@ def _run(args, storage_type, secret_key, access_key, targets, bucket, protocol, 
                ('100% Res Time', '100%-ResTime')]
 
     _print_results(columns, rows)
-    _add_results_to_sheet(sheet, id, size, workers, len(targets), name, description, columns, rows)
+    _add_results_to_sheet(sheet, id, storage_type, size, workers, len(targets), name, description, columns, rows)
 
     print("\nDone")
 
