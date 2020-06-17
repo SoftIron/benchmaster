@@ -7,7 +7,7 @@ Usage:
     benchmaster.py s3 adduser <name> 
     benchmaster.py s3 test-write [-p PORT] [--s3-keyfile FILE] <bucket> <gateway>
     benchmaster.py s3 run [-p PORT] [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [--sheet NAME] [--s3-keyfile FILE] <name> <description> <gateway> ...
-    benchmaster.py rados run [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [--sheet NAME] [--ceph-pool POOL] [--ceph-key KEY] <name> <description> <monitor> ...
+    benchmaster.py rados run [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [--sheet NAME] [--ceph-pool POOL] [--ceph-key KEY | --ceph-rootpw PW] <name> <description> <monitor> ...
     benchmaster.py -h | --help
 
     -h, --help                     Show usage
@@ -20,6 +20,7 @@ Usage:
     --s3-keyfile FILE   File containing S3 keys. [default: s3.keys]
     --ceph-pool POOL    Ceph pool to use for rados testing. This MUST end in '1' because of Cosbench internals.  [default: cosbench1]
     --ceph-key KEY      Ceph key to use - can usually be found in /etc/ceph/ceph.client.admnin.keyring.
+    --ceph-rootpw PW    Root password for the (first) ceph monitor so that we can grab the ceph.client.admin key.  [default: linux]
     --sheet NAME        Google spreadsheet name to which we will upload results.  
 """
 
@@ -178,6 +179,17 @@ def _s3_test_write(args):
 
 
 
+def _fetch_ceph_key(mon, rootpw):
+    """ Fetch a key from a monitor """
+    print("Fetching key from {}:/etc/ceph/ceph.client.admin.keyring".format(mon))
+    cmd = 'sshpass -p ' + rootpw +' ssh -o StrictHostKeyChecking=no root@' + mon + " grep key /etc/ceph/ceph.client.admin.keyring | awk '{print $3}'"
+    rc = subprocess.run(cmd, shell=True, capture_output=True, check=True)
+    key = rc.stdout.decode("utf-8")
+    print("Found key: {}".format(key))
+    return key
+
+
+
 def _handle_s3(args):
     if args['adduser']:    _s3_adduser(args)
     if args['test-write']: _s3_test_write(args)
@@ -194,13 +206,18 @@ def _handle_rados(args):
         if pool[-1] != '1':
             print("The ceph pool name MUST end in 1 (because of Cosbench internals")
             exit(-1)
-        _run(args, "librados", args['--ceph-key'], 'admin', args['<monitor>'], pool[:-1], None, None, False, False)
+
+        if args['--ceph-key'] is not None:
+            key = args['--ceph-key']
+        else:
+            key = _fetch_ceph_key(args['<monitor>'][0], args['--ceph-rootpw'])
+
+        _run(args, "librados", key, 'admin', args['<monitor>'], pool[:-1], None, None, False, False)
 
 
 
 def _handle_sheet(args):
     if args['create']: _sheet_create(args)
-
 
 
 if __name__ == "__main__":
