@@ -6,14 +6,17 @@ Usage:
     benchmaster.py sheet create [-g FILE] <sheetname> <account> ...
     benchmaster.py s3 adduser <name> 
     benchmaster.py s3 test-write [-p PORT] [--s3-keyfile FILE] <bucket> <gateway>
-    benchmaster.py s3 run [-p PORT] [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [--sheet NAME] [--s3-keyfile FILE] <name> <description> <gateway> ...
-    benchmaster.py rados run [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [--sheet NAME] [--ceph-pool POOL] [--ceph-key KEY | --ceph-rootpw PW] <name> <description> <monitor> ...
+    benchmaster.py s3 run [-p PORT] [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME] [--sheet NAME] [--s3-keyfile FILE] <name> <description> <gateway> ...
+    benchmaster.py rados run [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME] [--sheet NAME] [--ceph-pool POOL] [--ceph-key KEY | --ceph-rootpw PW] <name> <description> <monitor> ...
     benchmaster.py -h | --help
 
     -h, --help                     Show usage
     -w, --workers COUNT            Number of workers. [default: 300]
     -s, --size SIZE                Object size to test. [default: 1M]
-    -o, --ops COUNT                Number of operations per workstage. [default: 1000]
+    -o, --objects COUNT            Number of objects in the pool.  This should be enough that workers are unlikely to contend.  [default: 5000]
+    -r, --runtime TIME             Number of seconds for the test.  [default: 120]
+    -u, --ramp-up TIME             Number of seconds at the start of the test where we do not record data.  [default: 20]
+    -d, --ramp-down TIME           Number of seconds at the end of the test where we do not record data.  [default: 10]
     -p, --port PORT                Gateway port to connect to. [default: 80]
     -g, --google-credentials FILE  File containing Google Sheet credentials. [default: google-creds.json]
 
@@ -75,7 +78,7 @@ def _add_results_to_sheet(sheet, id, spec, description, columns, rows):
     time = datetime.now()
     
     # Build up a list of columns - not just the columns we got back as results, but metadata too.
-    scols = ['ID', 'Storage Type', 'Object Size', 'Workers', 'Ops', 'Gateways/Monitors']
+    scols = ['ID', 'Storage Type', 'Object Size', 'Object Count', 'Workers', 'Runtime', 'Ramp Up', 'Ramp Down', 'Gateways/Monitors']
     scols.extend(c[0] for c in columns)
     scols.extend(['Name', 'Description', 'Time'])
     spreadsheet.set_columns(sheet, scols)
@@ -83,7 +86,7 @@ def _add_results_to_sheet(sheet, id, spec, description, columns, rows):
     # Write the rows
     first = True
     for r in rows:
-        srow = [id, spec.storage_type, spec.size, spec.workers, spec.ops, len(spec.targets)]
+        srow = [id, spec.storage_type, spec.size, spec.object_count, spec.workers, spec.runtime, spec.ramp_up, spec.ramp_down, len(spec.targets)]
         srow.extend(r[c[1]] for c in columns)
         srow.extend([spec.name, description, time.strftime("%m/%d/%Y %H:%M:%S")])
         spreadsheet.append_row(sheet, srow, highlight=first)
@@ -94,16 +97,15 @@ def _add_results_to_sheet(sheet, id, spec, description, columns, rows):
 def _run(args, spec):
     spec.size = args['--size']
     spec.workers = int(args['--workers'])
-    spec.ops = int(args['--ops'])
+    spec.object_count = int(args['--objects'])
+    spec.runtime = int(args['--runtime'])
+    spec.ramp_up = int(args['--ramp-up'])
+    spec.ramp_down = int(args['--ramp-down'])
     spec.name = args['<name>']
     
     sheet_name = args['--sheet']
     credentials = args['--google-credentials']
     description = args['<description>']
-
-    if spec.workers > spec.ops:
-        print("Workers must be less than the number of operations")
-        exit(-1)
 
     gconn = None
     sheet = None
@@ -198,7 +200,7 @@ def _handle_s3(args):
         secret_key, access_key = s3.load_keys(args['--s3-keyfile'])
 
         spec = cosbench.Spec("s3", secret_key, access_key, args['<gateway>'])
-        spec.bucket = 'cosbench'
+        spec.bucket_prefix = 'cosbench'
         spec.protocol = 'http'
         spec.port = args['--port']
         spec.do_create = True

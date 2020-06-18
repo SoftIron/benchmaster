@@ -26,10 +26,13 @@ class Spec:
     access_key = None
     size = None
     workers = None
-    ops = None
+    ramp_up = None
+    ramp_down = None
+    runtime = None
     targets = None
     bucket_prefix = None
     bucket_count = 1
+    object_count = 5000
     protocol = None
     port = None
     do_create = False
@@ -84,19 +87,39 @@ def _bucket_creation(spec):
 
 
 
+def _storage(spec, target):
+    url = _build_url(spec.protocol, target, spec.port)
+    result =  '<storage type="{}" config="path_style_access=true;'.format(spec.storage_type)
+    result += 'accesskey={};secretkey={};endpoint={}"/>\n'.format(spec.access_key, spec.secret_key, url)
+    return result
+
+
+
+def _prepare(spec):
+    result =  '    <workstage name="prepare">\n'
+    result += '      <work type="prepare" workers="{}" '.format(spec.workers)
+    result += 'config="cprefix={};containers=r(1,{});'.format(spec.bucket_prefix, spec.bucket_count)
+    result += 'oprefix=CB-;objects=r(1,{});'.format(spec.object_count)
+    result += 'sizes=c({}){}B">\n'.format(spec.size[:-1], spec.size[-1:])
+    result += '        {}'.format(_storage(spec, spec.targets[0]))
+    result += '      </work>\n\n'
+    result += '    </workstage>\n\n'
+    return result
+
+
+
 def _work(spec, test_type):
     result =  '    <!-- {} Workstage -->\n'.format(test_type)
     result += '    <workstage name="{}">\n'.format(test_type)
    
     for t in spec.targets: 
-        url = _build_url(spec.protocol, t, spec.port)
-
-        result += '      <work name="{}-{}" workers="{}" division="container" totalOps="{}">\n'.format(test_type, t, spec.workers, spec.ops)
-        result += '        <storage type="{}" config="path_style_access=true;'.format(spec.storage_type)
-        result += 'accesskey={};secretkey={};endpoint={}"/>\n'.format(spec.access_key, spec.secret_key, url)
+        result += '      <work name="{}-{}" workers="{}" division="container" '.format(test_type, t, spec.workers)
+        result += 'runtime="{}" rampup="{}" rampdown="{}">\n'.format(spec.runtime, spec.ramp_up, spec.ramp_down)
+        result += '       ' + _storage(spec, t)
         result += '        <operation type="{}" ratio="100" '.format(test_type)
-        result += 'config="cprefix={};containers=c({})'.format(spec.bucket_prefix, spec.bucket_count)
-        result += ';oprefix=Target1-;objects=r(1,4999);sizes=c({}){}B;content=zero"/>\n'.format(spec.size[:-1], spec.size[-1:])
+        result += 'config="cprefix={};containers=c({});'.format(spec.bucket_prefix, spec.bucket_count)
+        result += 'oprefix=CB-;objects=r(1,{});'.format(spec.object_count)
+        result += 'sizes=c({}){}B;content=zero"/>\n'.format(spec.size[:-1], spec.size[-1:])
         result += '      </work>\n\n'
     
     result += '    </workstage>\n\n'
@@ -106,8 +129,8 @@ def _work(spec, test_type):
 
 def _cleanup(spec):
     return ('    <workstage name="cleanup">\n'
-            '      <work type="cleanup" workers="{}" config="cprefix={};containers=r(1,{});oprefix=Target1-;objects=r(1,4999);" />\n'
-            '    </workstage>\n\n').format(spec.workers, spec.bucket_prefix, spec.bucket_count)
+            '      <work type="cleanup" workers="{}" config="cprefix={};containers=r(1,{});oprefix=CB-;objects=r(1,{});" />\n'
+            '    </workstage>\n\n').format(spec.workers, spec.bucket_prefix, spec.bucket_count, spec.object_count)
 
 
 
@@ -132,6 +155,10 @@ def generate_test(spec):
         print("Invalid object size: {}.  Sizes should digitas followed by K, M or G.".format(spec.size))
         exit(-1) 
 
+    if spec.object_count < spec.workers * 10:
+        print("Object count is less than (10 * workers) - we are likely to have contention.")
+        exit(-1)
+
     # Generate the data
     workers_per_target = int(spec.workers / len(spec.targets))
     time = datetime.now()
@@ -143,6 +170,7 @@ def generate_test(spec):
         if spec.do_create:
             f.write(_bucket_creation(spec))
 
+        f.write(_prepare(spec))
         f.write(_work(spec, "write"))
         f.write(_work(spec, "read"))
         f.write(_cleanup(spec))
