@@ -63,7 +63,7 @@ def _print_results(columns, rows):
 
 
 
-def _add_results_to_sheet(sheet, id, storage_type, size, workers, gateways, name, description, columns, rows):
+def _add_results_to_sheet(sheet, id, spec, description, columns, rows):
     """ Add the results to our spreadsheet (if we have one). """
     
     if sheet is None:
@@ -75,7 +75,7 @@ def _add_results_to_sheet(sheet, id, storage_type, size, workers, gateways, name
     time = datetime.now()
     
     # Build up a list of columns - not just the columns we got back as results, but metadata too.
-    scols = ['ID', 'Storage Type', 'Object Size', 'Workers', 'Gateways/Monitors']
+    scols = ['ID', 'Storage Type', 'Object Size', 'Workers', 'Ops', 'Gateways/Monitors']
     scols.extend(c[0] for c in columns)
     scols.extend(['Name', 'Description', 'Time'])
     spreadsheet.set_columns(sheet, scols)
@@ -83,25 +83,25 @@ def _add_results_to_sheet(sheet, id, storage_type, size, workers, gateways, name
     # Write the rows
     first = True
     for r in rows:
-        srow = [id, storage_type, size, workers, gateways]
+        srow = [id, spec.storage_type, spec.size, spec.workers, spec.ops, len(spec.targets)]
         srow.extend(r[c[1]] for c in columns)
-        srow.extend([name, description, time.strftime("%m/%d/%Y %H:%M:%S")])
+        srow.extend([spec.name, description, time.strftime("%m/%d/%Y %H:%M:%S")])
         spreadsheet.append_row(sheet, srow, highlight=first)
         first = False
 
 
 
-def _run(args, storage_type, secret_key, access_key, targets, bucket, protocol, port, do_create, do_dispose):
-    size = args['--size']
-    workers = int(args['--workers'])
-    ops = int(args['--ops'])
+def _run(args, spec):
+    spec.size = args['--size']
+    spec.workers = int(args['--workers'])
+    spec.ops = int(args['--ops'])
+    spec.name = args['<name>']
+    
     sheet_name = args['--sheet']
     credentials = args['--google-credentials']
-    name = args['<name>']
     description = args['<description>']
-    testfile = 'test.xml'
 
-    if workers > ops:
+    if spec.workers > spec.ops:
         print("Workers must be less than the number of operations")
         exit(-1)
 
@@ -118,11 +118,11 @@ def _run(args, storage_type, secret_key, access_key, targets, bucket, protocol, 
             print("Unable to open Google spreadsheet {}".format(sheet_name))
             exit(-1)
 
-    print("Generating test file: {}".format(testfile))
-    cosbench.generate_test(storage_type, name, testfile, secret_key, access_key, size, workers, ops, targets, bucket, protocol, port, do_create, do_dispose)
+    print("Generating test file: {}".format(spec.testfile))
+    cosbench.generate_test(spec)
 
-    print("Submitting test file: {}".format(testfile))
-    id = cosbench.submit(testfile)
+    print("Submitting test file: {}".format(spec.testfile))
+    id = cosbench.submit(spec.testfile)
     print("Job submitted with ID: {}".format(id))  
     print("Waiting for job to complete\n")
 
@@ -136,7 +136,7 @@ def _run(args, storage_type, secret_key, access_key, targets, bucket, protocol, 
                ('100% Res Time', '100%-ResTime')]
 
     _print_results(columns, rows)
-    _add_results_to_sheet(sheet, id, storage_type, size, workers, len(targets), name, description, columns, rows)
+    _add_results_to_sheet(sheet, id, spec, description, columns, rows)
 
     print("\nDone")
 
@@ -184,7 +184,7 @@ def _fetch_ceph_key(mon, rootpw):
     print("Fetching key from {}:/etc/ceph/ceph.client.admin.keyring".format(mon))
     cmd = 'sshpass -p ' + rootpw +' ssh -o StrictHostKeyChecking=no root@' + mon + " grep key /etc/ceph/ceph.client.admin.keyring | awk '{print $3}'"
     rc = subprocess.run(cmd, shell=True, capture_output=True, check=True)
-    key = rc.stdout.decode("utf-8")
+    key = rc.stdout.decode("utf-8")[:-1]
     print("Found key: {}".format(key))
     return key
 
@@ -196,7 +196,14 @@ def _handle_s3(args):
 
     if args['run']:
         secret_key, access_key = s3.load_keys(args['--s3-keyfile'])
-        _run(args, "s3", secret_key, access_key, args['<gateway>'], 'cosbench', "http", args['--port'], True, True)
+
+        spec = cosbench.Spec("s3", secret_key, access_key, args['<gateway>'])
+        spec.bucket = 'cosbench'
+        spec.protocol = 'http'
+        spec.port = args['--port']
+        spec.do_create = True
+        spec.do_dispose = True
+        _run(args, spec)
 
 
 
@@ -212,7 +219,9 @@ def _handle_rados(args):
         else:
             key = _fetch_ceph_key(args['<monitor>'][0], args['--ceph-rootpw'])
 
-        _run(args, "librados", key, 'admin', args['<monitor>'], pool[:-1], None, None, False, False)
+        spec = cosbench.Spec("librados", key, 'admin', args['<monitor>'])
+        spec.bucket_prefix = pool[:-1]
+        _run(args, spec)
 
 
 

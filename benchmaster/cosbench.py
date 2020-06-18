@@ -15,6 +15,36 @@ from datetime import datetime
 _cosbench_dir = '/usr/share/cosbench'
 
 
+
+class Spec:
+    """ A Spec object contains all the parameters we need to generate a job XML file.
+        It exists because the set of stuff was getting a bit to big to be handy. """
+
+    storage_type = None
+    name = None
+    secret_key = None
+    access_key = None
+    size = None
+    workers = None
+    ops = None
+    targets = None
+    bucket_prefix = None
+    bucket_count = 1
+    protocol = None
+    port = None
+    do_create = False
+    do_dispose = False
+    testfile = 'test.xml'
+
+    def __init__(self, storage_type, secret_key, access_key, targets):
+        self.storage_type = storage_type
+        self.secret_key = secret_key
+        self.access_key = access_key
+        self.targets = targets
+
+     
+
+
 def _build_url(protocol, host, port):
     """ Protocol and port are optional """
 
@@ -32,37 +62,41 @@ def _build_url(protocol, host, port):
 
 
 
-def _header(storage_type, test_name, time, access_key, secret_key, target, protocol, port):
-    url = _build_url(protocol, target, port)
+def _header(spec):
+    url = _build_url(spec.protocol, spec.targets[0], spec.port)
+    time = datetime.now()
+    
     result =  '<?xml version="1.0" encoding="UTF-8"?>\n'
-    result += '<workload name="{}" description="SoftIron Test Generated {}" config="">\n'.format(test_name, time)
-    result += '  <storage type="{}" config="path_style_access=true;accesskey={};secretkey={};endpoint={}"/>\n'.format(storage_type, access_key, secret_key, url)
+    result += '<workload name="{}" description="SoftIron Test Generated {}" config="">\n'.format(spec.name, time)
+    result += '  <storage type="{}" config="path_style_access=true;'.format(spec.storage_type)
+    result += 'accesskey={};secretkey={};endpoint={}"/>\n'.format(spec.access_key, spec.secret_key, url)
     result += '  <workflow>\n\n'
     return result
    
 
  
-def _bucket_creation(bucket_prefix, bucket_count):
-    result =  '    <!-- Bucket Creation Workstage: creates {} Bucket-->\n'.format(bucket_count)
+def _bucket_creation(spec):
+    result =  '    <!-- Bucket Creation Workstage: creates {} Bucket-->\n'.format(spec.bucket_count)
     result += '    <workstage name="bucket-create">\n'
-    result += '      <work type="init" workers="1" config="cprefix={};containers=r(1,{})" />\n'.format(bucket_prefix, bucket_count)
+    result += '      <work type="init" workers="1" config="cprefix={};containers=r(1,{})" />\n'.format(spec.bucket_prefix, spec.bucket_count)
     result += '    </workstage>\n\n'
     return result
 
 
 
-def _work(storage_type, test_type, objects, workers, operations, access_key, secret_key, targets, protocol, port, bucket_prefix, bucket_count):
+def _work(spec, test_type):
     result =  '    <!-- {} Workstage -->\n'.format(test_type)
     result += '    <workstage name="{}">\n'.format(test_type)
    
-    for t in targets: 
-        url = _build_url(protocol, t, port)
+    for t in spec.targets: 
+        url = _build_url(spec.protocol, t, spec.port)
 
-        result += '      <work name="{}-{}" workers="{}" division="container" totalOps="{}">\n'.format(test_type, t, workers, operations)
-        result += '        <storage type="{}" config="path_style_access=true;accesskey={};secretkey={}'.format(storage_type, access_key, secret_key)
-        result += ';endpoint={}"/>\n'.format(url)
-        result += '        <operation type="{}" ratio="100" config="cprefix={};containers=c({})'.format(test_type, bucket_prefix, bucket_count)
-        result += ';oprefix=Target1-;objects=r(1,4999);sizes=c({}){}B;content=zero"/>\n'.format(objects[:-1], objects[-1:])
+        result += '      <work name="{}-{}" workers="{}" division="container" totalOps="{}">\n'.format(test_type, t, spec.workers, spec.ops)
+        result += '        <storage type="{}" config="path_style_access=true;'.format(spec.storage_type)
+        result += 'accesskey={};secretkey={};endpoint={}"/>\n'.format(spec.access_key, spec.secret_key, url)
+        result += '        <operation type="{}" ratio="100" '.format(test_type)
+        result += 'config="cprefix={};containers=c({})'.format(spec.bucket_prefix, spec.bucket_count)
+        result += ';oprefix=Target1-;objects=r(1,4999);sizes=c({}){}B;content=zero"/>\n'.format(spec.size[:-1], spec.size[-1:])
         result += '      </work>\n\n'
     
     result += '    </workstage>\n\n'
@@ -70,17 +104,17 @@ def _work(storage_type, test_type, objects, workers, operations, access_key, sec
 
 
 
-def _cleanup(workers, bucket_prefix, bucket_count):
+def _cleanup(spec):
     return ('    <workstage name="cleanup">\n'
             '      <work type="cleanup" workers="{}" config="cprefix={};containers=r(1,{});oprefix=Target1-;objects=r(1,4999);" />\n'
-            '    </workstage>\n\n').format(workers, bucket_prefix, bucket_count)
+            '    </workstage>\n\n').format(spec.workers, spec.bucket_prefix, spec.bucket_count)
 
 
 
-def _dispose(bucket_prefix, bucket_count):
+def _dispose(spec):
     return ('    <workstage name="dispose">\n'
             '      <work type="dispose" workers="1" config="cprefix={};containers=r(1,{})" />\n'
-            '    </workstage>\n\n').format(bucket_prefix, bucket_count)
+            '    </workstage>\n\n').format(spec.bucket_prefix, spec.bucket_count)
 
 
 
@@ -90,31 +124,31 @@ def _footer():
 
 
 
-def generate_test(storage_type, name, testfile, secret_key, access_key, size, workers, ops, targets, bucket_prefix, protocol, port, do_create, do_dispose):
-    """ Generate a single XML test file for Cosbench."""
+def generate_test(spec):
+    """ Generate a single XML test file for Cosbench from a Spec object."""
 
     # Check that size is in the correct format
-    if not re.match("\d+[KMG]", size):
-        print("Invalid object size: {}.  Sizes should digitas followed by K, M or G.".format(size))
+    if not re.match("\d+[KMG]", spec.size):
+        print("Invalid object size: {}.  Sizes should digitas followed by K, M or G.".format(spec.size))
         exit(-1) 
 
     # Generate the data
-    workers_per_target = int(workers / len(targets))
+    workers_per_target = int(spec.workers / len(spec.targets))
     time = datetime.now()
     bucket_count = 1
 
-    with open(testfile, "w") as f:
-        f.write(_header(storage_type, name, time, access_key, secret_key, targets[0], protocol, port))
+    with open(spec.testfile, "w") as f:
+        f.write(_header(spec))
 
-        if do_create:
-            f.write(_bucket_creation(bucket_prefix, bucket_count))
+        if spec.do_create:
+            f.write(_bucket_creation(spec))
 
-        f.write(_work(storage_type, "write", size, workers_per_target, ops, access_key, secret_key, targets, protocol, port, bucket_prefix, bucket_count))
-        f.write(_work(storage_type, "read", size, workers_per_target, ops, access_key, secret_key, targets, protocol, port, bucket_prefix, bucket_count))
-        f.write(_cleanup(workers_per_target, bucket_prefix, bucket_count))
+        f.write(_work(spec, "write"))
+        f.write(_work(spec, "read"))
+        f.write(_cleanup(spec))
         
-        if do_dispose:
-            f.write(_dispose(bucket_prefix, bucket_count))
+        if spec.do_dispose:
+            f.write(_dispose(spec))
 
         f.write(_footer())
 
@@ -220,11 +254,11 @@ def _process_results(filename):
 
 
 
-def submit(test_file):
+def submit(testfile):
     """ Submit a test to cosbench.  We return the Cosbench ID for the job so it can be cancelled etc... """
 
-    cmd = ['{}/cli.sh'.format(_cosbench_dir), 'submit', '{}'.format(test_file)]
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd = ['{}/cli.sh'.format(_cosbench_dir), 'submit', '{}'.format(testfile)]
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
     stdout = result.stdout.decode('utf-8')
     
     return stdout.split(": ")[1].rstrip("\n")
