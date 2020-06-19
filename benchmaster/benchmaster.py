@@ -6,11 +6,12 @@ Usage:
     benchmaster.py sheet create [-g FILE] <sheetname> <account> ...
     benchmaster.py s3 adduser <name> 
     benchmaster.py s3 test-write [-p PORT] [--s3-keyfile FILE] <bucket> <gateway>
-    benchmaster.py s3 run [-p PORT] [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME] [--sheet NAME] [--s3-keyfile FILE] <name> <description> <gateway> ...
-    benchmaster.py rados run [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME] [--sheet NAME] [--ceph-pool POOL] [--ceph-key KEY | --ceph-rootpw PW] <name> <description> <monitor> ...
+    benchmaster.py s3 run [-v] [-p PORT] [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME] [--sheet NAME] [--s3-keyfile FILE] <name> <description> <gateway> ...
+    benchmaster.py rados run [-v] [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME] [--sheet NAME] [--ceph-pool POOL] [--ceph-key KEY | --ceph-rootpw PW] <name> <description> <monitor> ...
     benchmaster.py -h | --help
 
     -h, --help                     Show usage
+    -v, --verbose                  Show verbose output
     -w, --workers COUNT            Number of workers. [default: 300]
     -s, --size SIZE                Object size to test. [default: 1M]
     -o, --objects COUNT            Number of objects in the pool.  This should be enough that workers are unlikely to contend.  [default: 5000]
@@ -29,6 +30,7 @@ Usage:
 
 import boto
 import boto.s3.connection
+import copy
 import cosbench
 import json
 import re
@@ -180,6 +182,28 @@ def _s3_test_write(args):
     key.set_contents_from_string("Bar Squiggle Aardvark")
 
 
+def _run_sweep(args, spec, sweepable, original_sweepable):
+    if len(sweepable) == 0:   
+        msg = 'Performing sweep with {'
+        comma = False 
+        for s in original_sweepable:
+            if comma: msg += ', '
+            comma = True
+            msg += '{}={}'.format(s, args[s])
+
+        msg += '}'
+        print(msg)
+        _run(args, spec)
+        return
+
+    current = sweepable[0]
+    remaining = sweepable[1:]
+
+    for value in args[current].split(','):
+        args_copy = copy.copy(args)
+        args_copy[current] = value
+        _run_sweep(args_copy, spec, remaining, original_sweepable)
+
 
 def _fetch_ceph_key(mon, rootpw):
     """ Fetch a key from a monitor """
@@ -205,7 +229,9 @@ def _handle_s3(args):
         spec.port = args['--port']
         spec.do_create = True
         spec.do_dispose = True
-        _run(args, spec)
+
+        sweepable = ['--objects', '--ramp-down', '--ramp-up', '--runtime', '--size', '--workers']
+        _run_sweep(args, spec, sweepable, sweepable)
 
 
 
@@ -223,7 +249,9 @@ def _handle_rados(args):
 
         spec = cosbench.Spec("librados", key, 'admin', args['<monitor>'])
         spec.bucket_prefix = pool[:-1]
-        _run(args, spec)
+    
+        sweepable = ['--objects', '--ramp-down', '--ramp-up', '--runtime', '--size', '--workers']
+        _run_sweep(args, spec, sweepable, sweepable)
 
 
 
@@ -231,9 +259,11 @@ def _handle_sheet(args):
     if args['create']: _sheet_create(args)
 
 
+
 if __name__ == "__main__":
     args = docopt(__doc__, version='benchmaster 0.0.1', options_first=False)
-    print(args)
+    if args['--verbose']:
+        print(args)
 
     # Command handlers can dispatch to their sub-commands.
     if args['s3']:    _handle_s3(args)

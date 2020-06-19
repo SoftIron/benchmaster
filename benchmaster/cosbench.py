@@ -115,12 +115,12 @@ def _work(spec, test_type):
     for t in spec.targets: 
         result += '      <work name="{}-{}" workers="{}" division="container" '.format(test_type, t, spec.workers)
         result += 'runtime="{}" rampup="{}" rampdown="{}">\n'.format(spec.runtime, spec.ramp_up, spec.ramp_down)
-        result += '       ' + _storage(spec, t)
+        result += '        ' + _storage(spec, t)
         result += '        <operation type="{}" ratio="100" '.format(test_type)
         result += 'config="cprefix={};containers=c({});'.format(spec.bucket_prefix, spec.bucket_count)
         result += 'oprefix=CB-;objects=r(1,{});'.format(spec.object_count)
         result += 'sizes=c({}){}B;content=zero"/>\n'.format(spec.size[:-1], spec.size[-1:])
-        result += '      </work>\n\n'
+        result += '      </work>\n'
     
     result += '    </workstage>\n\n'
     return result
