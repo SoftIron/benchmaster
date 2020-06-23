@@ -12,7 +12,7 @@ Usage:
 
     -h, --help                     Show usage
     -v, --verbose                  Show verbose output
-    -w, --workers COUNT            Number of workers. [default: 300]
+    -w, --workers COUNT            Number of workers. [default: 500]
     -s, --size SIZE                Object size to test. [default: 1M]
     -o, --objects COUNT            Number of objects in the pool.  This should be enough that workers are unlikely to contend.  [default: 5000]
     -r, --runtime TIME             Number of seconds for the test.  [default: 120]
@@ -136,8 +136,9 @@ def _run(args, spec):
     # Each entry here is a tuple with the Column Name we wish to present, and the CosBench name for it. 
 
     columns = [('Stage', 'Stage'),
-               ('Bandwidth', 'Bandwidth'),
-               ('100% Res Time', '100%-ResTime')]
+               ('Bandwidth (Gb/s)', 'Bandwidth'),
+               ('95% Res Time (ms)', '100%-ResTime'),
+               ('100% Res Time (ms)', '100%-ResTime')]
 
     _print_results(columns, rows)
     _add_results_to_sheet(sheet, id, spec, description, columns, rows)
