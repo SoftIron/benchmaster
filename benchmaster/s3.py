@@ -17,21 +17,20 @@ def load_keys(filename):
         exit(-1)
 
 
-def add_user(username, keyfile):
+def add_user(username, keyfile, gateway, password):
     """ Adds a user to the rados gatweays, and writes the resulting key to s3.keys.
         We exit on failure. """
 
-    # Add the user to gateway
-    cmd =['radosgw-admin', 'user', 'create', '--uid={}'.format(username), '--display-name={}'.format(username)] 
-    try:
-        out = subprocess.run(cmd, capture_output=True, check=True)
-    except CallProcessError as e:
-        print("Failure adding user to rados gateway: {}".format(e))
-        exit(-1)
+    cmd =  'sshpass -p ' + password
+    cmd += ' ssh -o StrictHostKeyChecking=no root@' + gateway
+    cmd += ' radosgw-admin user create --uid={} --display-name={}'.format(username, username) 
 
+    rc = subprocess.run(cmd, shell=True, capture_output=True, check=True)
+    out = rc.stdout.decode("utf-8")
+    
     # Try parsing the result
     try:
-        data = json.loads(out.stdout)
+        data = json.loads(out)
         keys = data['keys'][0]
     except:
         print("Unable to read parse keys from: " + data)

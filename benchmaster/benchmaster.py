@@ -4,7 +4,7 @@
 
 Usage:
     benchmaster.py sheet create [-g FILE] <sheetname> <account> ...
-    benchmaster.py s3 adduser <name> 
+    benchmaster.py s3 adduser [--ceph-rootpw PW] <name> <gateway>
     benchmaster.py s3 test-write [-p PORT] [--s3-keyfile FILE] <bucket> <gateway>
     benchmaster.py s3 run [-v] [-p PORT] [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME] [--sheet NAME] [--s3-keyfile FILE] <name> <description> <gateway> ...
     benchmaster.py rados run [-v] [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME] [--sheet NAME] [--ceph-pool POOL] [--ceph-key KEY | --ceph-rootpw PW] <name> <description> <monitor> ...
@@ -20,11 +20,10 @@ Usage:
     -d, --ramp-down TIME           Number of seconds at the end of the test where we do not record data.  [default: 10]
     -p, --port PORT                Gateway port to connect to. [default: 80]
     -g, --google-credentials FILE  File containing Google Sheet credentials. [default: google-creds.json]
-
     --s3-keyfile FILE   File containing S3 keys. [default: s3.keys]
     --ceph-pool POOL    Ceph pool to use for rados testing. This MUST end in '1' because of Cosbench internals.  [default: cosbench1]
     --ceph-key KEY      Ceph key to use - can usually be found in /etc/ceph/ceph.client.admnin.keyring.
-    --ceph-rootpw PW    Root password for the (first) ceph monitor so that we can grab the ceph.client.admin key.  [default: linux]
+    --ceph-rootpw PW    Root password for the ceph nodes so that we can grab the ceph.client.admin key.  [default: linux]
     --sheet NAME        Google spreadsheet name to which we will upload results.  
 """
 
@@ -147,17 +146,44 @@ def _run(args, spec):
 
 
 
+def _run_sweep(args, spec, sweepable, original_sweepable):
+    if len(sweepable) == 0:   
+        msg = 'Performing sweep with {'
+        comma = False 
+        for s in original_sweepable:
+            if comma: msg += ', '
+            comma = True
+            msg += '{}={}'.format(s, args[s])
+
+        msg += '}'
+        print(msg)
+        _run(args, spec)
+        return
+
+    current = sweepable[0]
+    remaining = sweepable[1:]
+
+    for value in args[current].split(','):
+        args_copy = copy.copy(args)
+        args_copy[current] = value
+        _run_sweep(args_copy, spec, remaining, original_sweepable)
+
+
+
 def _s3_adduser(args):
     """ Create a new S3 user on the rados gatweways. """
     username = args['<name>']
     keyfile = args['--s3-keyfile']
-    print("Adding user {} to rados gateways and storing keys in {}".format(username, keyfile))
-    s3.add_user(username, keyfile)
+    gateway = args['<gateway>'][0]
+    password = args['--ceph-rootpw']
+    
+    print("Adding user {} on rados gateway {} and storing keys in {}".format(username, gateway, keyfile))
+    s3.add_user(username, keyfile, gateway, password)
 
 
 
 def _s3_test_write(args):
-
+    """ Try writing a single object to S3 """
     keyfile = args['--s3-keyfile']
     port = int(args['--port'])
     bucket_name = args['<bucket>']
@@ -183,27 +209,21 @@ def _s3_test_write(args):
     key.set_contents_from_string("Bar Squiggle Aardvark")
 
 
-def _run_sweep(args, spec, sweepable, original_sweepable):
-    if len(sweepable) == 0:   
-        msg = 'Performing sweep with {'
-        comma = False 
-        for s in original_sweepable:
-            if comma: msg += ', '
-            comma = True
-            msg += '{}={}'.format(s, args[s])
 
-        msg += '}'
-        print(msg)
-        _run(args, spec)
-        return
+def _s3_run(args):
+    """ Run a benchmark sweep on s3 """
+    secret_key, access_key = s3.load_keys(args['--s3-keyfile'])
 
-    current = sweepable[0]
-    remaining = sweepable[1:]
+    spec = cosbench.Spec("s3", secret_key, access_key, args['<gateway>'])
+    spec.bucket_prefix = 'cosbench'
+    spec.protocol = 'http'
+    spec.port = args['--port']
+    spec.do_create = True
+    spec.do_dispose = True
 
-    for value in args[current].split(','):
-        args_copy = copy.copy(args)
-        args_copy[current] = value
-        _run_sweep(args_copy, spec, remaining, original_sweepable)
+    sweepable = ['--objects', '--ramp-down', '--ramp-up', '--runtime', '--size', '--workers']
+    _run_sweep(args, spec, sweepable, sweepable)
+
 
 
 def _fetch_ceph_key(mon, rootpw):
@@ -217,42 +237,35 @@ def _fetch_ceph_key(mon, rootpw):
 
 
 
+def _rados_run(args):
+    """ Run a benchmark sweep on rados """
+    pool = args['--ceph-pool']
+    if pool[-1] != '1':
+        print("The ceph pool name MUST end in 1 (because of Cosbench internals")
+        exit(-1)
+
+    if args['--ceph-key'] is not None:
+        key = args['--ceph-key']
+    else:
+        key = _fetch_ceph_key(args['<monitor>'][0], args['--ceph-rootpw'])
+
+    spec = cosbench.Spec("librados", key, 'admin', args['<monitor>'])
+    spec.bucket_prefix = pool[:-1]
+
+    sweepable = ['--objects', '--ramp-down', '--ramp-up', '--runtime', '--size', '--workers']
+    _run_sweep(args, spec, sweepable, sweepable)
+
+
+
 def _handle_s3(args):
     if args['adduser']:    _s3_adduser(args)
     if args['test-write']: _s3_test_write(args)
-
-    if args['run']:
-        secret_key, access_key = s3.load_keys(args['--s3-keyfile'])
-
-        spec = cosbench.Spec("s3", secret_key, access_key, args['<gateway>'])
-        spec.bucket_prefix = 'cosbench'
-        spec.protocol = 'http'
-        spec.port = args['--port']
-        spec.do_create = True
-        spec.do_dispose = True
-
-        sweepable = ['--objects', '--ramp-down', '--ramp-up', '--runtime', '--size', '--workers']
-        _run_sweep(args, spec, sweepable, sweepable)
+    if args['run']:        _s3_run(args)
 
 
 
 def _handle_rados(args):
-    if (args['run']):
-        pool = args['--ceph-pool']
-        if pool[-1] != '1':
-            print("The ceph pool name MUST end in 1 (because of Cosbench internals")
-            exit(-1)
-
-        if args['--ceph-key'] is not None:
-            key = args['--ceph-key']
-        else:
-            key = _fetch_ceph_key(args['<monitor>'][0], args['--ceph-rootpw'])
-
-        spec = cosbench.Spec("librados", key, 'admin', args['<monitor>'])
-        spec.bucket_prefix = pool[:-1]
-    
-        sweepable = ['--objects', '--ramp-down', '--ramp-up', '--runtime', '--size', '--workers']
-        _run_sweep(args, spec, sweepable, sweepable)
+    if (args['run']): _rados_run(args)
 
 
 
