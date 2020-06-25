@@ -56,18 +56,15 @@ def _sheet_create(args):
 
 
 
-def _print_results(columns, rows):
+def _print_results(columns, row):
     """ Output the results to screen, nicely formatted """
-
-    print(' '.join("%-20s" % c[0] for c in columns))
-    print('-' * (len(columns) * 20))
-
-    for r in rows:
-        print(' '.join("%-20s" % r[c[1]] for c in columns))
+    print(' '.join("%-25s" % c[0] for c in columns))
+    print('-' * (len(columns) * 25))
+    print(' '.join("%-25s" % row[c[1]] for c in columns))
 
 
 
-def _add_results_to_sheet(sheet, id, spec, description, columns, rows):
+def _add_results_to_sheet(sheet, id, spec, description, columns, row):
     """ Add the results to our spreadsheet (if we have one). """
     
     if sheet is None:
@@ -86,12 +83,11 @@ def _add_results_to_sheet(sheet, id, spec, description, columns, rows):
 
     # Write the rows
     first = True
-    for r in rows:
-        srow = [id, spec.storage_type, spec.size, spec.object_count, spec.workers, spec.runtime, spec.ramp_up, spec.ramp_down, len(spec.targets)]
-        srow.extend(r[c[1]] for c in columns)
-        srow.extend([spec.name, description, time.strftime("%m/%d/%Y %H:%M:%S")])
-        spreadsheet.append_row(sheet, srow, highlight=first)
-        first = False
+    srow = [id, spec.storage_type, spec.size, spec.object_count, spec.workers, spec.runtime, spec.ramp_up, spec.ramp_down, len(spec.targets)]
+    srow.extend(row[c[1]] for c in columns)
+    srow.extend([spec.name, description, time.strftime("%m/%d/%Y %H:%M:%S")])
+    spreadsheet.append_row(sheet, srow)
+    first = False
 
 
 
@@ -134,14 +130,15 @@ def _run(args, spec):
     # Define the order we wish to present the columns (to preserve consistency if CosBench alters the order).
     # Each entry here is a tuple with the Column Name we wish to present, and the CosBench name for it. 
 
-    columns = [('Stage', 'Stage'),
-               ('Bandwidth (Gb/s)', 'Bandwidth'),
-               ('95% Res Time (ms)', '100%-ResTime'),
-               ('100% Res Time (ms)', '100%-ResTime')]
+    columns = [('Write Bandwidth (Gb/s)', 'Write Bandwidth'),
+               ('Write 95% Res Time (ms)', 'Write 100%-ResTime'),
+               ('Write 100% Res Time (ms)', 'Write 100%-ResTime'),
+               ('Read Bandwidth (Gb/s)', 'Read Bandwidth'),
+               ('Read 95% Res Time (ms)', 'Read 100%-ResTime'),
+               ('Read 100% Res Time (ms)', 'Read 100%-ResTime')]
 
     _print_results(columns, rows)
     _add_results_to_sheet(sheet, id, spec, description, columns, rows)
-
     print("\nDone")
 
 
@@ -229,7 +226,8 @@ def _s3_run(args):
 def _fetch_ceph_key(mon, rootpw):
     """ Fetch a key from a monitor """
     print("Fetching key from {}:/etc/ceph/ceph.client.admin.keyring".format(mon))
-    cmd = 'sshpass -p ' + rootpw +' ssh -o StrictHostKeyChecking=no root@' + mon + " grep key /etc/ceph/ceph.client.admin.keyring | awk '{print $3}'"
+    cmd =  'sshpass -p ' + rootpw +' ssh -o StrictHostKeyChecking=no root@' + mon 
+    cmd += " grep key /etc/ceph/ceph.client.admin.keyring | awk '{print $3}'"
     rc = subprocess.run(cmd, shell=True, capture_output=True, check=True)
     key = rc.stdout.decode("utf-8")[:-1]
     print("Found key: {}".format(key))

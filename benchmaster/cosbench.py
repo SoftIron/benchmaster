@@ -276,11 +276,11 @@ def _process_results(filename):
                         except:
                             pass
 
-    results = [] 
+    results = {}
 
     for stage, values in totals.items():
-        row = {}
-        row['Stage'] = stage;
+        if stage.endswith('write'): prefix = 'Write '
+        if stage.endswith('read'):  prefix = 'Read '
 
         for key, value in values.items():
             fs = fields_by_column[key]
@@ -293,9 +293,8 @@ def _process_results(filename):
             if fs.format_fn is not None:
                 value = fs.format_fn(value)
             
-            row[key] = str(value)
-        
-        results.append(row)
+            if prefix is not None:
+                results[prefix + key] = str(value)
 
     return results
 
