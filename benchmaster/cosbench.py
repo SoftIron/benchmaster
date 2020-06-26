@@ -30,9 +30,11 @@ class Spec:
     ramp_down = None
     runtime = None
     targets = None
+    total_ops = None
     bucket_prefix = None
     bucket_count = 1
     object_count = 5000
+    kind = 'time'
     protocol = None
     port = None
     do_create = False
@@ -70,7 +72,7 @@ def _header(spec):
     time = datetime.now()
     
     result =  '<?xml version="1.0" encoding="UTF-8"?>\n'
-    result += '<workload name="{}" description="SoftIron Test Generated {}" config="">\n'.format(spec.name, time)
+    result += '<workload name="test" description="SoftIron Test Generated {}" config="">\n'.format(time)
     result += '  <storage type="{}" config="path_style_access=true;'.format(spec.storage_type)
     result += 'accesskey={};secretkey={};endpoint={}"/>\n'.format(spec.access_key, spec.secret_key, url)
     result += '  <workflow>\n\n'
@@ -113,8 +115,33 @@ def _work(spec, test_type):
     result += '    <workstage name="{}">\n'.format(test_type)
    
     for t in spec.targets: 
+        url = _build_url(spec.protocol, t, spec.port)
+
+        result += '      <work name="{}-{}" workers="{}" division="container" totalOps="{}">\n'.format(test_type, t, spec.workers, spec.ops)
+        result += '        <storage type="{}" config="path_style_access=true;'.format(spec.storage_type)
+        result += 'accesskey={};secretkey={};endpoint={}"/>\n'.format(spec.access_key, spec.secret_key, url)
+        result += '        <operation type="{}" ratio="100" '.format(test_type)
+        result += 'config="cprefix={};containers=c({})'.format(spec.bucket_prefix, spec.bucket_count)
+        result += ';oprefix=Target1-;objects=r(1,4999);sizes=c({}){}B;content=zero"/>\n'.format(spec.size[:-1], spec.size[-1:])
+        result += '      </work>\n\n'
+    
+    result += '    </workstage>\n\n'
+    return result
+
+
+
+def _work(spec, test_type):
+    result =  '    <!-- {} Workstage -->\n'.format(test_type)
+    result += '    <workstage name="{}">\n'.format(test_type)
+   
+    for t in spec.targets: 
         result += '      <work name="{}-{}" workers="{}" division="container" '.format(test_type, t, spec.workers)
-        result += 'runtime="{}" rampup="{}" rampdown="{}">\n'.format(spec.runtime, spec.ramp_up, spec.ramp_down)
+
+        if spec.kind == 'time':
+            result += 'runtime="{}" rampup="{}" rampdown="{}">\n'.format(spec.runtime, spec.ramp_up, spec.ramp_down)
+        else:
+            result += 'totalOps="{}">\n'.format(spec.total_ops)
+
         result += '        ' + _storage(spec, t)
         result += '        <operation type="{}" ratio="100" '.format(test_type)
         result += 'config="cprefix={};containers=c({});'.format(spec.bucket_prefix, spec.bucket_count)
@@ -170,7 +197,9 @@ def generate_test(spec):
         if spec.do_create:
             f.write(_bucket_creation(spec))
 
-        f.write(_prepare(spec))
+        if spec.kind == 'time':
+            f.write(_prepare(spec))
+
         f.write(_work(spec, "write"))
         f.write(_work(spec, "read"))
         f.write(_cleanup(spec))

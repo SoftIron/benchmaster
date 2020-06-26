@@ -6,18 +6,21 @@ Usage:
     benchmaster.py sheet create [-g FILE] <sheetname> <account> ...
     benchmaster.py s3 adduser [--ceph-rootpw PW] <name> <gateway>
     benchmaster.py s3 test-write [-p PORT] [--s3-keyfile FILE] <bucket> <gateway>
-    benchmaster.py s3 run [-v] [-p PORT] [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME] [--sheet NAME] [--s3-keyfile FILE] <name> <description> <gateway> ...
-    benchmaster.py rados run [-v] [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME] [--sheet NAME] [--ceph-pool POOL] [--ceph-key KEY | --ceph-rootpw PW] <name> <description> <monitor> ...
+    benchmaster.py s3 run-time [-v] [-p PORT] [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME] [--sheet NAME] [--s3-keyfile FILE] <description> <gateway> ...
+    benchmaster.py s3 run-count [-v] [-p PORT] [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [-c COUNT] [--sheet NAME] [--s3-keyfile FILE] <description> <gateway> ...
+    benchmaster.py rados run-time [-v] [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME] [--sheet NAME] [--ceph-pool POOL] [--ceph-key KEY | --ceph-rootpw PW] <description> <monitor> ...
+    benchmaster.py rados run-count [-v] [-g FILE] [-w COUNT] [-s SIZE] [-o COUNT] [-c COUNT] [--sheet NAME] [--ceph-pool POOL] [--ceph-key KEY | --ceph-rootpw PW] <description> <monitor> ...
     benchmaster.py -h | --help
-
+    
     -h, --help                     Show usage
     -v, --verbose                  Show verbose output
     -w, --workers COUNT            Number of workers. [default: 500]
     -s, --size SIZE                Object size to test. [default: 1M]
-    -o, --objects COUNT            Number of objects in the pool.  This should be enough that workers are unlikely to contend.  [default: 5000]
+    -o, --objects COUNT            Number of objects in the pool.  [default: 5000]
     -r, --runtime TIME             Number of seconds for the test.  [default: 120]
     -u, --ramp-up TIME             Number of seconds at the start of the test where we do not record data.  [default: 20]
     -d, --ramp-down TIME           Number of seconds at the end of the test where we do not record data.  [default: 10]
+    -c, --count COUNT              Numboer of ops to perform in the test.  [default: 1000]
     -p, --port PORT                Gateway port to connect to. [default: 80]
     -g, --google-credentials FILE  File containing Google Sheet credentials. [default: google-creds.json]
     --s3-keyfile FILE   File containing S3 keys. [default: s3.keys]
@@ -76,18 +79,21 @@ def _add_results_to_sheet(sheet, id, spec, description, columns, row):
     time = datetime.now()
     
     # Build up a list of columns - not just the columns we got back as results, but metadata too.
-    scols = ['ID', 'Storage Type', 'Object Size', 'Object Count', 'Workers', 'Runtime', 'Ramp Up', 'Ramp Down', 'Gateways/Monitors']
+    scols = ['ID', 'Storage Type', 'Object Size', 'Object Pool', 'Workers', 'Schedule', 'Gateways/Monitors']
     scols.extend(c[0] for c in columns)
-    scols.extend(['Name', 'Description', 'Time'])
+    scols.extend(['Description', 'Time'])
     spreadsheet.set_columns(sheet, scols)
 
     # Write the rows
-    first = True
-    srow = [id, spec.storage_type, spec.size, spec.object_count, spec.workers, spec.runtime, spec.ramp_up, spec.ramp_down, len(spec.targets)]
+    if spec.kind == 'time':
+        schedule = 'Time: r{}, u{}, d{}'.format(spec.runtime, spec.ramp_up, spec.ramp_down)
+    else:
+        schedule = 'Count: {}'.format(spec.total_ops)
+
+    srow = [id, spec.storage_type, spec.size, spec.object_count, spec.workers, schedule, len(spec.targets)]
     srow.extend(row[c[1]] for c in columns)
-    srow.extend([spec.name, description, time.strftime("%m/%d/%Y %H:%M:%S")])
+    srow.extend([description, time.strftime("%m/%d/%Y %H:%M:%S")])
     spreadsheet.append_row(sheet, srow)
-    first = False
 
 
 
@@ -98,7 +104,12 @@ def _run(args, spec):
     spec.runtime = int(args['--runtime'])
     spec.ramp_up = int(args['--ramp-up'])
     spec.ramp_down = int(args['--ramp-down'])
-    spec.name = args['<name>']
+    spec.total_ops = int(args['--count'])
+
+    if args['run-time']:
+        spec.kind = 'time'
+    else:
+        spec.kind = 'count'
     
     sheet_name = args['--sheet']
     credentials = args['--google-credentials']
@@ -130,12 +141,12 @@ def _run(args, spec):
     # Define the order we wish to present the columns (to preserve consistency if CosBench alters the order).
     # Each entry here is a tuple with the Column Name we wish to present, and the CosBench name for it. 
 
-    columns = [('Write Bandwidth (Gb/s)', 'Write Bandwidth'),
-               ('Write 95% Res Time (ms)', 'Write 100%-ResTime'),
-               ('Write 100% Res Time (ms)', 'Write 100%-ResTime'),
-               ('Read Bandwidth (Gb/s)', 'Read Bandwidth'),
-               ('Read 95% Res Time (ms)', 'Read 100%-ResTime'),
-               ('Read 100% Res Time (ms)', 'Read 100%-ResTime')]
+    columns = [('Wr Bandwidth (Gb/s)', 'Write Bandwidth'),
+               ('Wr 95% Res Time (ms)', 'Write 100%-ResTime'),
+               ('Wr 100% Res Time (ms)', 'Write 100%-ResTime'),
+               ('Rd Bandwidth (Gb/s)', 'Read Bandwidth'),
+               ('Rd 95% Res Time (ms)', 'Read 100%-ResTime'),
+               ('Rd 100% Res Time (ms)', 'Read 100%-ResTime')]
 
     _print_results(columns, rows)
     _add_results_to_sheet(sheet, id, spec, description, columns, rows)
@@ -165,6 +176,16 @@ def _run_sweep(args, spec, sweepable, original_sweepable):
         args_copy[current] = value
         _run_sweep(args_copy, spec, remaining, original_sweepable)
 
+
+
+def _sweepables(args):
+    """ Return a list of the sweepable parameteres for a run """
+
+    if args['run-time']:
+        return ['--objects', '--ramp-down', '--ramp-up', '--runtime', '--size', '--workers']
+    else:
+        return ['--objects', '--count', '--size', '--workers']
+        
 
 
 def _s3_adduser(args):
@@ -218,7 +239,7 @@ def _s3_run(args):
     spec.do_create = True
     spec.do_dispose = True
 
-    sweepable = ['--objects', '--ramp-down', '--ramp-up', '--runtime', '--size', '--workers']
+    sweepable = _sweepables(args)
     _run_sweep(args, spec, sweepable, sweepable)
 
 
@@ -250,7 +271,7 @@ def _rados_run(args):
     spec = cosbench.Spec("librados", key, 'admin', args['<monitor>'])
     spec.bucket_prefix = pool[:-1]
 
-    sweepable = ['--objects', '--ramp-down', '--ramp-up', '--runtime', '--size', '--workers']
+    sweepable = _sweepables(args)
     _run_sweep(args, spec, sweepable, sweepable)
 
 
@@ -258,12 +279,12 @@ def _rados_run(args):
 def _handle_s3(args):
     if args['adduser']:    _s3_adduser(args)
     if args['test-write']: _s3_test_write(args)
-    if args['run']:        _s3_run(args)
+    if args['run-time'] or args['run-count']: _s3_run(args)
 
 
 
 def _handle_rados(args):
-    if (args['run']): _rados_run(args)
+    if args['run-time'] or args['run-count']: _rados_run(args)
 
 
 
