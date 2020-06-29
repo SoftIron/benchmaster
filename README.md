@@ -14,7 +14,7 @@ It currently supports:
 Running on a new machine:
 
 ```bash
-apt-get install python3-pip
+apt-get install python3-pip sshpass
 pip3 install boto gspread docopt
 
 ./benchmaster.py --help
