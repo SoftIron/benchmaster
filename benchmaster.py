@@ -21,7 +21,7 @@ Usage:
     -u, --ramp-up TIME             Number of seconds at the start of the test where we do not record data.  [default: 20]
     -d, --ramp-down TIME           Number of seconds at the end of the test where we do not record data.  [default: 10]
     -c, --count COUNT              Numboer of ops to perform in the test.  [default: 1000]
-    -p, --port PORT                Gateway port to connect to. [default: 80]
+    -p, --port PORT                Gateway port to connect to. [default: 7480]
     -g, --google-credentials FILE  File containing Google Sheet credentials. [default: google-creds.json]
     --s3-keyfile FILE   File containing S3 keys. [default: s3.keys]
     --ceph-pool POOL    Ceph pool to use for rados testing. This MUST end in '1' because of Cosbench internals.  [default: cosbench1]
