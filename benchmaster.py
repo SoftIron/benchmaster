@@ -67,7 +67,7 @@ def _print_results(columns, row):
 
 
 
-def _add_results_to_sheet(sheet, id, spec, description, columns, row):
+def _add_results_to_sheet(sheet, id, spec, description, start_time, end_time, columns, row):
     """ Add the results to our spreadsheet (if we have one). """
     
     if sheet is None:
@@ -76,12 +76,10 @@ def _add_results_to_sheet(sheet, id, spec, description, columns, row):
 
     print("Updating google spreadsheet")
 
-    time = datetime.now()
-    
     # Build up a list of columns - not just the columns we got back as results, but metadata too.
     scols = ['ID', 'Storage Type', 'Object Size', 'Object Pool', 'Workers', 'Schedule', 'Gateways/Monitors']
     scols.extend(c[0] for c in columns)
-    scols.extend(['Description', 'Time'])
+    scols.extend(['Description', 'Start Time', 'End Time'])
     spreadsheet.set_columns(sheet, scols)
 
     # Write the rows
@@ -92,7 +90,7 @@ def _add_results_to_sheet(sheet, id, spec, description, columns, row):
 
     srow = [id, spec.storage_type, spec.size, spec.object_count, spec.workers, schedule, len(spec.targets)]
     srow.extend(row[c[1]] for c in columns)
-    srow.extend([description, time.strftime("%m/%d/%Y %H:%M:%S")])
+    srow.extend([description, start_time.strftime("%m/%d/%Y %H:%M:%S"), end_time.strftime("%m/%d/%Y %H:%M:%S")])
     spreadsheet.append_row(sheet, srow)
 
 
@@ -136,7 +134,9 @@ def _run(args, spec):
     print("Job submitted with ID: {}".format(id))  
     print("Waiting for job to complete\n")
 
+    start_time = datetime.now()
     rows = cosbench.wait_for_results(id)
+    end_time = datetime.now()
 
     # Define the order we wish to present the columns (to preserve consistency if CosBench alters the order).
     # Each entry here is a tuple with the Column Name we wish to present, and the CosBench name for it. 
@@ -149,7 +149,7 @@ def _run(args, spec):
                ('Rd 100% Res Time (ms)', 'Read 100%-ResTime')]
 
     _print_results(columns, rows)
-    _add_results_to_sheet(sheet, id, spec, description, columns, rows)
+    _add_results_to_sheet(sheet, id, spec, description, start_time, end_time, columns, rows)
     print("\nDone")
 
 
