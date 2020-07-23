@@ -58,7 +58,7 @@ Usage:
     --ceph-pool POOL               Ceph pool to use. This MUST end in '1' because of Cosbench internals.  [default: benchmark1]
     --ceph-user USER               Ceph user for rados testing.  [default: admin]
     --ceph-key KEY                 Ceph key to use - can usually be found in /etc/ceph/ceph.client.admnin.keyring.
-    --ceph-rootpw PW               Root password for the ceph nodes so that we can grab ceph.client.admin key.  [default: linux]
+    --ceph-rootpw PW               Root password for the ceph nodes so that we can fetch keys or create users.  [default: linux]
 """
 
 import boto
