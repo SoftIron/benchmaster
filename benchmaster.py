@@ -5,20 +5,20 @@
 Usage:
     benchmaster.py sheet create        [-g FILE] <sheetname> <account> ...
     benchmaster.py s3 adduser          [--ceph-rootpw PW] <name> <gateway>
-    benchmaster.py s3 test-write       [--s3-port PORT] [--s3-bucket BUCKET] [--s3-keyfile FILE] <gateway>
+    benchmaster.py s3 test-write       [--s3-port PORT] [--s3-bucket BUCKET] [--s3-credentials FILE] <gateway>
     benchmaster.py s3 cosbench ops     [-v] [-s SIZE] [-o COUNT] [-c COUNT]
                                        [--sheet NAME] [-g FILE]
-                                       [--s3-bucket BUCKET] [--s3-keyfile FILE] [--s3-port PORT]
+                                       [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
                                        [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
                                        <description> <gateway> ...
     benchmaster.py s3 cosbench time    [-v] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME]
                                        [--sheet NAME] [-g FILE]
-                                       [--s3-bucket BUCKET] [--s3-keyfile FILE] [--s3-port PORT]
+                                       [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
                                        [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
                                        <description> <gateway> ...
     benchmaster.py s3 sibench time     [-v] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME]
                                        [--sheet NAME] [-g FILE]
-                                       [--s3-bucket BUCKET] [--s3-keyfile FILE] [--s3-port PORT]
+                                       [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
                                        [--sibench-port PORT] [--sibench-servers SERVERS]
                                        <description> <gateway> ...
     benchmaster.py rados cosbench ops  [-v] [-s SIZE] [-o COUNT] [-c COUNT]
@@ -38,27 +38,28 @@ Usage:
                                        <description> <monitor> ...
     benchmaster.py -h | --help
 
+Options:
     -h, --help                     Show usage
     -v, --verbose                  Show verbose output
-    -s, --size SIZE                Object size to test. [default: 1M]
-    -o, --objects COUNT            Number of objects in the pool.  [default: 5000]
-    -r, --run-time TIME            Number of seconds for the test.  [default: 120]
-    -u, --ramp-up TIME             Number of seconds at the start of the test where we do not record data.  [default: 20]
-    -d, --ramp-down TIME           Number of seconds at the end of the test where we do not record data.  [default: 10]
-    -c, --count COUNT              Numboer of ops to perform in the test.  [default: 1000]
-    -g, --google-credentials FILE  File containing Google Sheet credentials. [default: google-creds.json]
-    --sheet NAME                   Google spreadsheet name to which we will upload results.  
-    --cosbench-workers COUNT       The number of workers to use for cosbench.  [default: 500]
-    --cosbench-xmlfile FILE        The name of the XML file to write out for Cosbench.  [default: test.xml]
-    --sibench-servers SERVERS      A comma-separated list of the sibench servers we wish to use.  [default: localhost]
-    --sibench-port PORT            The port on which to connect to the sibench servers.  [default: 5150]
-    --s3-keyfile FILE              File containing S3 keys. [default: s3.keys]
-    --s3-port PORT                 The port on which to connect to the S3 gateways.  [default: 7480]
-    --s3-bucket BUCKET             The bucket to use to on S3.  [default: benchmark]
-    --ceph-pool POOL               Ceph pool to use. This MUST end in '1' because of Cosbench internals.  [default: benchmark1]
-    --ceph-user USER               Ceph user for rados testing.  [default: admin]
-    --ceph-key KEY                 Ceph key to use - can usually be found in /etc/ceph/ceph.client.admnin.keyring.
-    --ceph-rootpw PW               Root password for the ceph nodes so that we can fetch keys or create users.  [default: linux]
+    -s, --size SIZE                Object size to test                                    sweepable  [default: 1M]
+    -o, --objects COUNT            Number of objects in the pool                          sweepable  [default: 5000]
+    -r, --run-time TIME            Seconds for the test (does not include ramp up/down)   sweepable  [default: 120]
+    -u, --ramp-up TIME             Seconds at start of test where we do not record        sweepable  [default: 20]
+    -d, --ramp-down TIME           Seconds at end of test where we do not record          sweepable  [default: 10]
+    -c, --count COUNT              Numboer of ops to perform in the test                  sweepable  [default: 1000]
+    -g, --google-credentials FILE  File containing Google Sheet credentials                          [default: gcreds.json]
+    --sheet NAME                   Google spreadsheet to which we will upload results  
+    --cosbench-workers COUNT       The number of workers to use for cosbench              sweepable  [default: 500]
+    --cosbench-xmlfile FILE        The name of the XML file to write out for Cosbench                [default: cosbench.xml]
+    --sibench-servers SERVERS      A comma-separated list of sibench servers                         [default: localhost]
+    --sibench-port PORT            The port on which to connect to the sibench servers               [default: 5150]
+    --s3-credentials FILE          File containing S3 keys                                           [default: s3creds.json]
+    --s3-port PORT                 The port on which to connect to the S3 gateways                   [default: 7480]
+    --s3-bucket BUCKET             The bucket to use to on S3                                        [default: benchmark]
+    --ceph-pool POOL               Ceph pool to use. MUST end in '1' if using Cosbench               [default: benchmark1]
+    --ceph-user USER               Ceph user for rados testing                                       [default: admin]
+    --ceph-rootpw PW               Root password for ceph nodes to fetch keys or create ueers        [default: linux]
+    --ceph-key KEY                 Ceph key, normally from /etc/ceph/ceph.client.admnin.keyring
 """
 
 import boto
@@ -150,7 +151,7 @@ def _make_protocol_spec(args):
     """ Parse out the protocol specific parts of our command line arguments. """
 
     if args['s3']:
-        secret_key, access_key = s3.load_keys(args['--s3-keyfile'])
+        secret_key, access_key = s3.load_keys(args['--s3-credentials'])
         return spec.S3Spec(access_key, secret_key, args['--s3-port'], args['--s3-bucket'], args['<gateway>'])
     
     if args['rados']:
@@ -202,23 +203,23 @@ def _make_spec(args):
 def _s3_adduser(args):
     """ Create a new S3 user on the rados gatweways. """
     username = args['<name>']
-    keyfile = args['--s3-keyfile']
+    cred_file = args['--s3-credentials']
     gateway = args['<gateway>'][0]
     password = args['--ceph-rootpw']
     
-    print("Adding user {} on rados gateway {} and storing keys in {}".format(username, gateway, keyfile))
-    s3.add_user(username, keyfile, gateway, password)
+    print("Adding user {} on rados gateway {} and storing keys in {}".format(username, gateway, cred_file))
+    s3.add_user(username, cred_file, gateway, password)
 
 
 
 def _s3_test_write(args):
     """ Try writing a single object to S3 """
-    keyfile = args['--s3-keyfile']
+    cred_file = args['--s3-credentials']
     port = int(args['--port'])
     bucket_name = args['<bucket>']
     gateway = args['<gateway>'][0]
 
-    secret_key, access_key = s3.load_keys(keyfile)
+    secret_key, access_key = s3.load_keys(cred_file)
 
     conn = boto.connect_s3(
             aws_access_key_id=access_key,

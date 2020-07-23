@@ -58,6 +58,10 @@ class CosbenchValues:
             self.port = p.port
 
         elif p.name() == 'rados':  
+            if pl.pool[-1] != '1':
+                print("The pool name must end in '1' if using Cosbench as a backend")
+                exit(-1)
+
             self.storage_type = "librados"
             self.url_protocol = None
             self.access_key = p.user
