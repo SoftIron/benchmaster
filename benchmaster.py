@@ -3,9 +3,9 @@
 """Welcome to the Benchmaster 5000, for all your benchmarking needs.
 
 Usage:
-    benchmaster.py sheet create        [-g FILE] <sheetname> <account> ...
-    benchmaster.py s3 adduser          [--ceph-rootpw PW] <name> <gateway>
-    benchmaster.py s3 test-write       [--s3-port PORT] [--s3-bucket BUCKET] [--s3-credentials FILE] <gateway>
+    benchmaster.py sheet create        [-v] [-g FILE] <sheetname> <account> ...
+    benchmaster.py s3 adduser          [-v] [--ceph-rootpw PW] <name> <gateway>
+    benchmaster.py s3 test-write       [-v] [--s3-port PORT] [--s3-bucket BUCKET] [--s3-credentials FILE] <gateway>
     benchmaster.py s3 cosbench ops     [-v] [-s SIZE] [-o COUNT] [-c COUNT]
                                        [--sheet NAME] [-g FILE]
                                        [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
@@ -262,7 +262,7 @@ def _fetch_ceph_key(mon, rootpw):
 
 def _handle_s3(args):
     if   args['time']:       _run_sweep(args)
-    elif args['count']:      _run_sweep(args)
+    elif args['ops']:        _run_sweep(args)
     elif args['adduser']:    _s3_adduser(args)
     elif args['test-write']: _s3_test_write(args)
 
@@ -270,7 +270,7 @@ def _handle_s3(args):
 
 def _handle_rados(args):
     if   args['time']:       _run_sweep(args)
-    elif args['count']:      _run_sweep(args)
+    elif args['ops']:        _run_sweep(args)
 
 
 
