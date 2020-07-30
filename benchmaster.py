@@ -36,6 +36,11 @@ Usage:
                                        [--ceph-pool POOL] [--ceph-user USER --ceph-key KEY | --ceph-rootpw PW]
                                        [--sibench-port PORT] [--sibench-servers SERVERS]
                                        <description> <monitor> ...
+    benchmaster.py cephfs sibench time [-v] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME]
+                                       [--sheet NAME] [-g FILE]
+                                       [--ceph-dir DIR] [--ceph-user USER --ceph-key KEY | --ceph-rootpw PW]
+                                       [--sibench-port PORT] [--sibench-servers SERVERS]
+                                       <description> <monitor> ...
     benchmaster.py -h | --help
 
 Options:
@@ -60,6 +65,7 @@ Options:
     --ceph-user USER               Ceph user for rados testing                                       [default: admin]
     --ceph-rootpw PW               Root password for ceph nodes to fetch keys or create ueers        [default: linux]
     --ceph-key KEY                 Ceph key, normally from /etc/ceph/ceph.client.admnin.keyring
+    --ceph-dir DIR                 Directory in a CephFS filesystem to use.                          [default: benchmark]
 """
 
 import boto
@@ -154,14 +160,21 @@ def _make_protocol_spec(args):
         secret_key, access_key = s3.load_keys(args['--s3-credentials'])
         return spec.S3Spec(access_key, secret_key, args['--s3-port'], args['--s3-bucket'], args['<gateway>'])
     
-    if args['rados']:
+    if args['rados'] or args['cephfs']:
+        # Both of these protocol handle keys the same way
+
         if args['--ceph-key'] is not None:
             key = args['--ceph-key']
             user = args['--ceph-user']
         else:
             key = _fetch_ceph_key(args['<monitor>'][0], args['--ceph-rootpw'])
             user = 'admin'
+
+    if args['rados']:
         return spec.RadosSpec(user, key, args['--ceph-pool'], args['<monitor>'])
+
+    if args['cephfs']:
+        return spec.CephFSSpec(user, key, args['--ceph-dir'], args['<monitor>'])
 
     print("Not a known protocol")
     exit(-1)
@@ -273,9 +286,12 @@ def _handle_rados(args):
     elif args['ops']:        _run_sweep(args)
 
 
+def _handle_cephfs(args):
+    if args['time']:         _run_sweep(args)
+
 
 def _handle_sheet(args):
-    if args['create']: _sheet_create(args)
+    if args['create']:       _sheet_create(args)
 
 
 
@@ -285,7 +301,8 @@ if __name__ == "__main__":
         print(args)
 
     # Command handlers can dispatch to their sub-commands handlers.
-    if args['s3']:      _handle_s3(args)
-    elif args['rados']: _handle_rados(args)
-    elif args['sheet']: _handle_sheet(args)
+    if args['s3']:        _handle_s3(args)
+    elif args['rados']:   _handle_rados(args)
+    elif args['cephfs']:  _handle_cephfs(args)
+    elif args['sheet']:   _handle_sheet(args)
 
