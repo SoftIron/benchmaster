@@ -19,7 +19,7 @@ Usage:
     benchmaster.py s3 sibench time     [-v] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME]
                                        [--sheet NAME] [-g FILE]
                                        [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
-                                       [--sibench-port PORT] [--sibench-servers SERVERS]
+                                       [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
                                        <description> <gateway> ...
     benchmaster.py rados cosbench ops  [-v] [-s SIZE] [-o COUNT] [-c COUNT]
                                        [--sheet NAME] [-g FILE]
@@ -34,12 +34,12 @@ Usage:
     benchmaster.py rados sibench time  [-v] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME]
                                        [--sheet NAME] [-g FILE]
                                        [--ceph-pool POOL] [--ceph-user USER --ceph-key KEY | --ceph-rootpw PW]
-                                       [--sibench-port PORT] [--sibench-servers SERVERS]
+                                       [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
                                        <description> <monitor> ...
     benchmaster.py cephfs sibench time [-v] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME]
                                        [--sheet NAME] [-g FILE]
                                        [--ceph-dir DIR] [--ceph-user USER --ceph-key KEY | --ceph-rootpw PW]
-                                       [--sibench-port PORT] [--sibench-servers SERVERS]
+                                       [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
                                        <description> <monitor> ...
     benchmaster.py -h | --help
 
@@ -58,6 +58,7 @@ Options:
     --cosbench-xmlfile FILE        The name of the XML file to write out for Cosbench                [default: cosbench.xml]
     --sibench-servers SERVERS      A comma-separated list of sibench servers                         [default: localhost]
     --sibench-port PORT            The port on which to connect to the sibench servers               [default: 5150]
+    --sibench-bandwidth BW         The bandwidth limit to use, in units of K, M or G bits/s          [default: 0]
     --s3-credentials FILE          File containing S3 keys                                           [default: s3creds.json]
     --s3-port PORT                 The port on which to connect to the S3 gateways                   [default: 7480]
     --s3-bucket BUCKET             The bucket to use to on S3                                        [default: benchmark]
@@ -65,7 +66,7 @@ Options:
     --ceph-user USER               Ceph user for rados testing                                       [default: admin]
     --ceph-rootpw PW               Root password for ceph nodes to fetch keys or create ueers        [default: linux]
     --ceph-key KEY                 Ceph key, normally from /etc/ceph/ceph.client.admnin.keyring
-    --ceph-dir DIR                 Directory in a CephFS filesystem to use.                          [default: benchmark]
+    --ceph-dir DIR                 Directory in a CephFS filesystem to use                           [default: benchmark]
 """
 
 import boto
@@ -185,7 +186,7 @@ def _make_backend_spec(args):
     """ Parse out the backend specific parts of our command line arguments. """
 
     if args['cosbench']: return spec.CosbenchSpec(args['--cosbench-workers'], args['--cosbench-xmlfile'])
-    if args['sibench']:  return spec.SibenchSpec(args['--sibench-port'], args['--sibench-servers'].split(','))
+    if args['sibench']:  return spec.SibenchSpec(args['--sibench-port'], args['--sibench-servers'].split(','), args['--sibench-bandwidth'])
     print("Not a known backend")
     exit(-1)
 

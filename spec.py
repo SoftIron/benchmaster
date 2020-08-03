@@ -140,9 +140,10 @@ class CephFSSpec:
 
 class SibenchSpec:
     """ Backend spec implementation for Sibench """
-    def __init__(self, port, servers):
+    def __init__(self, port, servers, bandwidth):
         self.port = port
         self.servers = servers
+        self.bandwidth = bandwidth
 
     def __repr__(self):     return str(vars(self))
     def name(self):         return "sibench"
