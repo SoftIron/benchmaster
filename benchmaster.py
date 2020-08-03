@@ -58,7 +58,7 @@ Options:
     --cosbench-xmlfile FILE        The name of the XML file to write out for Cosbench                [default: cosbench.xml]
     --sibench-servers SERVERS      A comma-separated list of sibench servers                         [default: localhost]
     --sibench-port PORT            The port on which to connect to the sibench servers               [default: 5150]
-    --sibench-bandwidth BW         The bandwidth limit to use, in units of K, M or G bits/s          [default: 0]
+    --sibench-bandwidth BW         The bandwidth limit in units of K, M or G bits/s       sweepavble [default: 0]
     --s3-credentials FILE          File containing S3 keys                                           [default: s3creds.json]
     --s3-port PORT                 The port on which to connect to the S3 gateways                   [default: 7480]
     --s3-bucket BUCKET             The bucket to use to on S3                                        [default: benchmark]

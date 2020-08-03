@@ -147,7 +147,7 @@ class SibenchSpec:
 
     def __repr__(self):     return str(vars(self))
     def name(self):         return "sibench"
-    def flatten(self):      return [self]
+    def flatten(self):      return [SibenchSpec(self.port, self.servers, bw) for bw in self.bandwidth.split(',')]
 
     # Methods that abstract information across backends.
     def workers(self):      return len(self.servers)
