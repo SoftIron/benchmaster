@@ -84,9 +84,10 @@ def _direction_result(analysis):
     res_min = analysis['ResTimeMin'] / (1000 * 1000)
     res_max = analysis['ResTimeMax'] / (1000 * 1000)
     res_95 = analysis['ResTime95'] / (1000 * 1000)
+    res_avg = analysis['ResTimeAvg'] / (1000 * 1000)
 
     successes = analysis['Successes']
     failures = analysis['Failures']
 
-    return DirectionResult(bandwidth, res_min, res_max, res_95, successes, failures)
+    return DirectionResult(bandwidth, res_min, res_max, res_95, res_avg, successes, failures)
 

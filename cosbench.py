@@ -262,6 +262,7 @@ def _process_results(filename):
         FieldSpec('Bandwidth', None, _gbits_format, False),
         FieldSpec('95%-ResTime', None, None, True),
         FieldSpec('100%-ResTime', None, None, True),
+        FieldSpec('Avg-ResTime', None, None, True),
         FieldSpec('Op-Count', None, None, False),
         FieldSpec('Succ-Ratio', _strip_units, None, True)
     ]
@@ -387,12 +388,28 @@ def run(spec):
     # Fill in the Read stats 
     r_successes = int(float(vals['Read Op-Count']) * float(vals['Read Succ-Ratio']) / 100)
     r_fails = int(float(vals['Read Op-Count'])) - r_successes
-    result.read = DirectionResult(vals['Read Bandwidth'], '-', vals['Read 100%-ResTime'], vals['Read 95%-ResTime'], r_successes, r_fails)
+
+    result.read = DirectionResult(
+            vals['Read Bandwidth'], 
+            '-', 
+            vals['Read 100%-ResTime'], 
+            vals['Read 95%-ResTime'],
+            vals['Read Avg-ResTime'],
+            r_successes, 
+            r_fails)
 
     # Fill in the Write stats
     w_successes = int(float(vals['Write Op-Count']) * float(vals['Write Succ-Ratio']) / 100)
     w_fails = int(float(vals['Write Op-Count'])) - w_successes
-    result.write = DirectionResult(vals['Write Bandwidth'], '-', vals['Write 100%-ResTime'], vals['Write 95%-ResTime'], w_successes, w_fails)
+
+    result.write = DirectionResult(
+            vals['Write Bandwidth'], 
+            '-', 
+            vals['Write 100%-ResTime'], 
+            vals['Write 95%-ResTime'],
+            vals['Write Avg-ResTime'],
+            r_successes, 
+            r_fails)
     
     return result
 
