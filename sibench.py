@@ -27,7 +27,7 @@ def run(spec):
 
     # From here on we should be good, so let's build our command line to invoke sibench
 
-    cmd = '{} {} run -s{} -o{} -r{} -u{} -d{} -b{} -jsibench.json --servers {} -p {} {}'.format(
+    cmd = '{} {} run -s{} -o{} -r{} -u{} -d{} -w{} -b{} -jsibench.json --servers {} -p {} {}'.format(
             sibench_binary,
             protocol,
             spec.size,
@@ -35,6 +35,7 @@ def run(spec):
             spec.runtype.runtime,
             spec.runtype.ramp_up,
             spec.runtype.ramp_down,
+            spec.backend.worker_factor,
             spec.backend.bandwidth,
             ','.join(spec.backend.servers),
             spec.backend.port,
