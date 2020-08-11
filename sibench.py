@@ -5,7 +5,7 @@ import subprocess
 from result import Result, DirectionResult
 
 
-sibench_binary = '/root/sibench/bin/sibench'
+sibench_binary = 'sibench'
 
 def run(spec):
     """ Run the test described by the spec using sibench as the backend.
@@ -57,6 +57,11 @@ def run(spec):
             spec.protocol.subdir,
             spec.protocol.user,
             spec.protocol.key)
+
+    if spec.backend.fast_mode:
+        cmd += ' --fast-mode'
+
+    print("Running command: {}".format(cmd))
 
     # And now run it.
     subprocess.check_call(cmd, shell=True)

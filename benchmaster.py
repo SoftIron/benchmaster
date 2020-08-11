@@ -20,6 +20,7 @@ Usage:
                                        [--sheet NAME] [-g FILE]
                                        [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
                                        [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
+                                       [--sibench-fastmode]
                                        <description> <gateway> ...
     benchmaster.py rados cosbench ops  [-v] [-s SIZE] [-o COUNT] [-c COUNT]
                                        [--sheet NAME] [-g FILE]
@@ -35,11 +36,13 @@ Usage:
                                        [--sheet NAME] [-g FILE]
                                        [--ceph-pool POOL] [--ceph-user USER --ceph-key KEY | --ceph-rootpw PW]
                                        [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
+                                       [--sibench-fastmode]
                                        <description> <monitor> ...
     benchmaster.py cephfs sibench time [-v] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME]
                                        [--sheet NAME] [-g FILE]
                                        [--ceph-dir DIR] [--ceph-user USER --ceph-key KEY | --ceph-rootpw PW]
                                        [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
+                                       [--sibench-fastmode]
                                        <description> <monitor> ...
     benchmaster.py -h | --help
 
@@ -60,6 +63,7 @@ Options:
     --sibench-port PORT            The port on which to connect to the sibench servers               [default: 5150]
     --sibench-bandwidth BW         The bandwidth limit in units of K, M or G bits/s       sweepable  [default: 0]
     --sibench-workers FACTOR       Workers per server = factor x no of cores.             sweepable  [default: 1.0]
+    --sibench-fastmode             Disable read validation for speed.    
     --s3-credentials FILE          File containing S3 keys                                           [default: s3creds.json]
     --s3-port PORT                 The port on which to connect to the S3 gateways                   [default: 7480]
     --s3-bucket BUCKET             The bucket to use to on S3                                        [default: benchmark]
@@ -149,7 +153,8 @@ def _run_sweep(args):
     # Flatten the spec (which may define a sweep) into a list of simple specs, and run run them.
     for s in spec.flatten():
         # Use json as a convenient way to pretty print a heirarchical class structure.
-        print("Running Benchmark:\n" + json.dumps(json.loads(str(s).replace("'", '"')), indent=3))
+        jstr = str(s).replace("'", '"').replace('False', 'false').replace('True', 'true')
+        print("Running Benchmark:\n" + json.dumps(json.loads(jstr), indent=3))
         _run_single(args, s)
     exit(0)
 
@@ -194,7 +199,8 @@ def _make_backend_spec(args):
             args['--sibench-port'], 
             args['--sibench-servers'].split(','), 
             args['--sibench-bandwidth'],
-            args['--sibench-workers'])
+            args['--sibench-workers'],
+            args['--sibench-fastmode'])
 
     print("Not a known backend")
     exit(-1)
@@ -271,10 +277,11 @@ def _fetch_ceph_key(mon, rootpw):
     cmd += " grep key /etc/ceph/ceph.client.admin.keyring | awk '{print $3}'"
 
     rc = subprocess.run(cmd, shell=True, capture_output=True, check=True)
-    key = rc.stdout.decode("utf-8")[:-1]
+    out = rc.stdout.decode("utf-8")
+    key = out[:-1]
 
     if key == '':
-        print("Unable to fetch key")
+        print("Unable to fetch key: " + rc.stderr.decode('utf-8'))
         exit(-1)
 
     print("Found key: {}".format(key))
