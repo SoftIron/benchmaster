@@ -25,7 +25,7 @@ class Result:
 
     def columns():
         """ Returns an array of the column names we want for google sheets. """
-        return ['ID', 'Protocol', 'Backend', 'Size', 'Ojbect Pool', 'Workers', 'Schedule', 'Targets', 
+        return ['ID', 'Protocol', 'Backend', 'Size', 'Object Pool', 'Workers', 'Schedule', 'Targets',
                 'Wr Bandwidth Gb/s', 'Wr ResTime Min ms', 'Wr ResTime Max ms', 'Wr ResTime95 ms', 'Wr ResTimeAvg ms', 'Wr Successes', 'Wr Failures',
                 'Rd Bandwidth Gb/s', 'Rd ResTime Min ms', 'Rd ResTime Max ms', 'Rd ResTime95 ms', 'Rd ResTimeAvg ms', 'Rd Successes', 'Rd Failures',
                 'Description', 'Start', 'End']
