@@ -121,6 +121,23 @@ class RadosSpec:
         
 
 
+class RbdSpec:
+    """ Protocol spec implementation for Rbd """
+    def __init__(self, user, key, pool, monitors):
+        self.user = user
+        self.key = key
+        self.pool = pool
+        self.monitors = monitors
+
+    def __repr__(self):      return str(vars(self))
+    def name(self):          return "rbd"
+    def flatten(self):       return [self]
+
+    # Methods that abstract information across protocols.
+    def targets(self):       return self.monitors
+
+
+
 class CephFSSpec:
     """ Protocol spec implementation for CephFS """
     def __init__(self, user, key, subdir, monitors):

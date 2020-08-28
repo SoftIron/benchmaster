@@ -16,7 +16,7 @@ def run(spec):
     # Check that this is something we support, and convert cosbench storage type ids into sibench ones. 
 
     protocol = spec.protocol.name()
-    if protocol not in ['s3', 'rados', 'cephfs']:
+    if protocol not in ['s3', 'rados', 'rbd', 'cephfs']:
         print('Bad storage type for sibench: {}'.format(protocol))
         exit(-1) 
 
@@ -47,7 +47,7 @@ def run(spec):
             spec.protocol.bucket,
             spec.protocol.access_key,
             spec.protocol.secret_key)
-    elif protocol == 'rados':
+    elif (protocol == 'rados') or (protocol == 'rbd'):
         cmd += ' --ceph-pool {} --ceph-user {} --ceph-key {}'.format(
             spec.protocol.pool,
             spec.protocol.user,

@@ -32,10 +32,16 @@ Usage:
                                        [--ceph-pool POOL] [--ceph-user USER --ceph-key KEY | --ceph-rootpw PW]
                                        [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
                                        <description> <monitor> ...
-    benchmaster.py rados sibench time  [-v] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME]
-                                       [--sheet NAME] [-g FILE]
-                                       [--ceph-pool POOL] [--ceph-user USER --ceph-key KEY | --ceph-rootpw PW]
-                                       [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
+    benchmaster.py rados sibench time  [-v] [-s size] [-o count] [-r time] [-u time] [-d time]
+                                       [--sheet name] [-g file]
+                                       [--ceph-pool pool] [--ceph-user user --ceph-key key | --ceph-rootpw pw]
+                                       [--sibench-workers factor] [--sibench-port port] [--sibench-bandwidth bw] [--sibench-servers servers]
+                                       [--sibench-fastmode]
+                                       <description> <monitor> ...
+    benchmaster.py rbd sibench time    [-v] [-s size] [-o count] [-r time] [-u time] [-d time]
+                                       [--sheet name] [-g file]
+                                       [--ceph-pool pool] [--ceph-user user --ceph-key key | --ceph-rootpw pw]
+                                       [--sibench-workers factor] [--sibench-port port] [--sibench-bandwidth bw] [--sibench-servers servers]
                                        [--sibench-fastmode]
                                        <description> <monitor> ...
     benchmaster.py cephfs sibench time [-v] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME]
@@ -167,8 +173,8 @@ def _make_protocol_spec(args):
         secret_key, access_key = s3.load_keys(args['--s3-credentials'])
         return spec.S3Spec(access_key, secret_key, args['--s3-port'], args['--s3-bucket'], args['<gateway>'])
     
-    if args['rados'] or args['cephfs']:
-        # Both of these protocol handle keys the same way
+    if args['rados'] or args['cephfs'] or args['rbd']:
+        # All of these protocol handle keys the same way
 
         if args['--ceph-key'] is not None:
             key = args['--ceph-key']
@@ -179,6 +185,9 @@ def _make_protocol_spec(args):
 
     if args['rados']:
         return spec.RadosSpec(user, key, args['--ceph-pool'], args['<monitor>'])
+
+    if args['rbd']:
+        return spec.RbdSpec(user, key, args['--ceph-pool'], args['<monitor>'])
 
     if args['cephfs']:
         return spec.CephFSSpec(user, key, args['--ceph-dir'], args['<monitor>'])
@@ -297,10 +306,13 @@ def _handle_s3(args):
     elif args['test-write']: _s3_test_write(args)
 
 
-
 def _handle_rados(args):
     if   args['time']:       _run_sweep(args)
     elif args['ops']:        _run_sweep(args)
+
+
+def _handle_rbd(args):
+    if   args['time']:       _run_sweep(args)
 
 
 def _handle_cephfs(args):
@@ -320,6 +332,7 @@ if __name__ == "__main__":
     # Command handlers can dispatch to their sub-commands handlers.
     if args['s3']:        _handle_s3(args)
     elif args['rados']:   _handle_rados(args)
+    elif args['rbd']:     _handle_rbd(args)
     elif args['cephfs']:  _handle_cephfs(args)
     elif args['sheet']:   _handle_sheet(args)
 
