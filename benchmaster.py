@@ -253,7 +253,7 @@ def _s3_adduser(args):
 def _s3_test_write(args):
     """ Try writing a single object to S3 """
     cred_file = args['--s3-credentials']
-    port = int(args['--port'])
+    port = int(args['--s3-port'])
     bucket_name = args['<bucket>']
     gateway = args['<gateway>'][0]
 
