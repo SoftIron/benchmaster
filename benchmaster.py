@@ -50,6 +50,16 @@ Usage:
                                        [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
                                        [--sibench-fastmode]
                                        <description> <monitor> ...
+    benchmaster.py iscsi setup         [-v] 
+                                       [--iscsi-image-size SIZE] [--iscsi-device-link LINK]
+                                       [--ceph-pool pool] [--ceph-rootpw PW]
+                                       [--sibench-servers SERVERS] [--sibench-rootpw PW]
+                                       <gateway> ...
+    benchmaster.py iscsi teardown      [-v] 
+                                       [--iscsi-device-link LINK]
+                                       [--ceph-pool pool] [--ceph-rootpw PW]
+                                       [--sibench-servers SERVERS] [--sibench-rootpw PW]
+                                       <gateway> ...
     benchmaster.py -h | --help
 
 Options:
@@ -70,6 +80,7 @@ Options:
     --sibench-bandwidth BW         The bandwidth limit in units of K, M or G bits/s       sweepable  [default: 0]
     --sibench-workers FACTOR       Workers per server = factor x no of cores.             sweepable  [default: 1.0]
     --sibench-fastmode             Disable read validation for speed.    
+    --sibench-rootpw PW            Root password for the sibench servers                             [default: linux]
     --s3-credentials FILE          File containing S3 keys                                           [default: s3creds.json]
     --s3-port PORT                 The port on which to connect to the S3 gateways                   [default: 7480]
     --s3-bucket BUCKET             The bucket to use to on S3                                        [default: benchmark]
@@ -78,12 +89,15 @@ Options:
     --ceph-rootpw PW               Root password for ceph nodes to fetch keys or create ueers        [default: linux]
     --ceph-key KEY                 Ceph key, normally from /etc/ceph/ceph.client.admnin.keyring
     --ceph-dir DIR                 Directory in a CephFS filesystem to use                           [default: benchmark]
+    --iscsi-image-size SIZE        Size of the RBD images we create for iscsi to mount               [default: 1G]
+    --iscsi-device-link LINK       Link to create on the sibench servers to mount iscsi              [default: /tmp/sibench-iscsi]
 """
 
 import boto
 import boto.s3.connection
 import copy
 import cosbench
+import iscsi
 import json
 import re
 import pprint
@@ -323,6 +337,13 @@ def _handle_sheet(args):
     if args['create']:       _sheet_create(args)
 
 
+def _handle_iscsi(args):
+_setup(gateways, servers, rootpw, pool, size, link)
+#_teardown(gateways, servers, rootpw, pool, link)
+    if   args['setup']:     iscsi.setup(args['gateway'], args['servers'], 
+    elif args['teardown']:
+
+
 
 if __name__ == "__main__":
     args = docopt(__doc__, version='benchmaster 0.0.1', options_first=False)
@@ -335,4 +356,5 @@ if __name__ == "__main__":
     elif args['rbd']:     _handle_rbd(args)
     elif args['cephfs']:  _handle_cephfs(args)
     elif args['sheet']:   _handle_sheet(args)
+    elif args['iscsi']:   _handle_iscsi(args)
 
