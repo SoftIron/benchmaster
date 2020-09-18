@@ -268,7 +268,7 @@ def _s3_test_write(args):
     """ Try writing a single object to S3 """
     cred_file = args['--s3-credentials']
     port = int(args['--s3-port'])
-    bucket_name = args['<bucket>']
+    bucket_name = args['--s3-bucket']
     gateway = args['<gateway>'][0]
 
     secret_key, access_key = s3.load_keys(cred_file)
