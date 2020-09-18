@@ -338,10 +338,17 @@ def _handle_sheet(args):
 
 
 def _handle_iscsi(args):
-_setup(gateways, servers, rootpw, pool, size, link)
-#_teardown(gateways, servers, rootpw, pool, link)
-    if   args['setup']:     iscsi.setup(args['gateway'], args['servers'], 
-    elif args['teardown']:
+    iargs = iscsi.IscsiArgs(
+            args['<gateway>'],
+            args['--ceph-rootpw'],
+            args['--sibench-servers'].split(','),
+            args['--sibench-rootpw'],
+            args['--ceph-pool'],
+            args['--iscsi-image-size'],
+            args['--iscsi-device-link'])
+
+    if   args['setup']:     iscsi.setup(iargs)
+    elif args['teardown']:  iscsi.teardown(iargs)
 
 
 

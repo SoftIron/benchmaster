@@ -49,22 +49,27 @@ def _setup_initiator(args):
 
 
 def _create_images(args):
+    print("Creating images")
     for s in args.servers:
         name = _image_name(s)
         cmd = 'rbd create {}/{} --size {} --image-feature=layering,exclusive-lock'.format(args.pool, name, args.image_size)
         _ssh_cmd(args.gateways[0], args.gateway_pw, cmd)
+    print("Created.")
 
 
 
 def _delete_images(args):
+    print("Deleting images")
     for s in args.servers:
         name = _image_name(s)
         cmd = 'rbd rm {} -p {}'.format(name, args.pool)
         _ssh_cmd(args.gateways[0], args.gateway_pw, cmd)
+    print("Deleted")
 
 
 
 def _configure_images_on_gateways(args, operation, host_ids):
+    print("Configuring images")
     flag = ""
     if    operation == 'export': flag = '-e'
     elif  operation == 'unexport': flag = '-u'
@@ -77,11 +82,13 @@ def _configure_images_on_gateways(args, operation, host_ids):
         for id in host_ids:
             cmd += ' -t {}'.format(id)
 
-    _ssh_cmd(args.gateways[0], args.gateway_pw, cmd)
+        _ssh_cmd(args.gateways[0], args.gateway_pw, cmd)
+    print("Configured")
 
 
 
 def _mount_images(args):
+    print("Mounting images")
     for s in args.servers:
         name = _image_name(s)
 
@@ -114,14 +121,17 @@ def _mount_images(args):
         # Create the link,
         link_cmd = 'ln -s /dev/{} {}'.format(str(dm).rstrip(), args.device_link)
         _ssh_cmd(s, args.server_pw, link_cmd)
+    print("Mounted")
 
    
  
 def _unmount_images(args):
+    print("Unmounting images")
     for s in args.servers:
         _ssh_cmd(s, args.server_pw, 'unlink {}'.format(args.device_link))
         _ssh_cmd(s, args.server_pw, 'iscsiadm --mode node --logoutall=all')
         _ssh_cmd(s, args.server_pw, 'multipath -W')
+    print("Unmounted")
                     
 
 
