@@ -41,6 +41,13 @@ def _image_name(server):
 
 
 
+def _setup_initiator(args):
+    initator = 'qn.2014-01.com.softiron.iscsi_gw_v0:' + args.gateways[0]
+    for s in args.servers:
+        _ssh_cmd(s, args.server_pw, "sed -i 's/InitiatorName=.*/InitiatorName={}/' /etc/iscsi/initiatorname.iscsi".format(initator))
+        _ssh_cmd(s, args.server_pw, 'systemctl restart iscsid')
+
+
 def _create_images(args):
     for s in args.servers:
         name = _image_name(s)
@@ -121,6 +128,7 @@ def _unmount_images(args):
 def setup(args):
     host_ids = _fetch_gateway_hostids(args)
 
+    _setup_initiator(args)
     _create_images(args)
     _configure_images_on_gateways(args, 'export', host_ids)
     _mount_images(args)
