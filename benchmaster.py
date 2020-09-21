@@ -50,6 +50,11 @@ Usage:
                                        [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
                                        [--sibench-fastmode]
                                        <description> <monitor> ...
+    benchmaster.py block sibench time  [-v] [-s size] [-o count] [-r time] [-u time] [-d time]
+                                       [--sheet name] [-g file]
+                                       [--sibench-workers factor] [--sibench-port port] [--sibench-bandwidth bw] [--sibench-servers servers]
+                                       [--sibench-fastmode]
+                                       <description> <block-device>
     benchmaster.py iscsi setup         [-v] 
                                        [--iscsi-image-size SIZE] [--iscsi-device-link LINK]
                                        [--ceph-pool pool] [--ceph-rootpw PW]
@@ -206,6 +211,9 @@ def _make_protocol_spec(args):
     if args['cephfs']:
         return spec.CephFSSpec(user, key, args['--ceph-dir'], args['<monitor>'])
 
+    if args['block']:
+        return spec.BlockSpec(args['<block-device>'])
+
     print("Not a known protocol")
     exit(-1)
 
@@ -333,6 +341,10 @@ def _handle_cephfs(args):
     if args['time']:         _run_sweep(args)
 
 
+def _handle_block(args):
+    if args['time']:         _run_sweep(args)
+
+
 def _handle_sheet(args):
     if args['create']:       _sheet_create(args)
 
@@ -363,5 +375,6 @@ if __name__ == "__main__":
     elif args['rbd']:     _handle_rbd(args)
     elif args['cephfs']:  _handle_cephfs(args)
     elif args['sheet']:   _handle_sheet(args)
+    elif args['block']:   _handle_block(args)
     elif args['iscsi']:   _handle_iscsi(args)
 

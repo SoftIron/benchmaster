@@ -155,6 +155,20 @@ class CephFSSpec:
 
 
 
+class BlockSpec:
+    """ Protocol spec implementation for raw block devices """
+    def __init__(self, device):
+        self.device = device
+
+    def __repr__(self):      return str(vars(self))
+    def name(self):          return "block"
+    def flatten(self):       return [self]
+
+    # Methods that abstract information across protocols.
+    def targets(self):       return [self.device]
+
+
+
 class SibenchSpec:
     """ Backend spec implementation for Sibench """
     def __init__(self, port, servers, bandwidth, worker_factor, fast_mode):

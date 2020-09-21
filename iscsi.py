@@ -42,7 +42,7 @@ def _image_name(server):
 
 
 def _setup_initiator(args):
-    initator = 'qn.2014-01.com.softiron.iscsi_gw_v0:' + args.gateways[0]
+    initator = 'iqn.2014-01.com.softiron.iscsi_gw_v0:' + args.gateways[0]
     for s in args.servers:
         _ssh_cmd(s, args.server_pw, "sed -i 's/InitiatorName=.*/InitiatorName={}/' /etc/iscsi/initiatorname.iscsi".format(initator))
         _ssh_cmd(s, args.server_pw, 'systemctl restart iscsid')
@@ -91,6 +91,11 @@ def _mount_images(args):
     print("Mounting images")
     for s in args.servers:
         name = _image_name(s)
+    
+        # Do discovery for each gateway
+        for gw in args.gateways:
+            discovery_cmd = 'iscsiadm --mode discoverydb --type sendtargets --portal {} --discover'.format(gw)    
+            _ssh_cmd(s, args.server_pw, discovery_cmd)
 
         # Log in to the active and secondary ISCSI targets.
         for mode in ['act', 'nop']:

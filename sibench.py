@@ -16,7 +16,7 @@ def run(spec):
     # Check that this is something we support, and convert cosbench storage type ids into sibench ones. 
 
     protocol = spec.protocol.name()
-    if protocol not in ['s3', 'rados', 'rbd', 'cephfs']:
+    if protocol not in ['s3', 'rados', 'rbd', 'cephfs', 'block']:
         print('Bad storage type for sibench: {}'.format(protocol))
         exit(-1) 
 
@@ -27,7 +27,7 @@ def run(spec):
 
     # From here on we should be good, so let's build our command line to invoke sibench
 
-    cmd = '{} {} run -s{} -o{} -r{} -u{} -d{} -w{} -b{} -jsibench.json --servers {} -p {} {}'.format(
+    cmd = '{} {} run -s{} -o{} -r{} -u{} -d{} -w{} -b{} -jsibench.json --servers {} -p {}'.format(
             sibench_binary,
             protocol,
             spec.size,
@@ -38,25 +38,32 @@ def run(spec):
             spec.backend.worker_factor,
             spec.backend.bandwidth,
             ','.join(spec.backend.servers),
-            spec.backend.port,
-            ' '.join(spec.protocol.targets()))
+            spec.backend.port)
 
     if protocol == 's3':
-        cmd += ' --s3-port {} --s3-bucket {} --s3-access-key {} --s3-secret-key {}'.format(
+        cmd += ' --s3-port {} --s3-bucket {} --s3-access-key {} --s3-secret-key {} {}'.format(
             spec.protocol.port,
             spec.protocol.bucket,
             spec.protocol.access_key,
-            spec.protocol.secret_key)
+            spec.protocol.secret_key,
+            ' '.join(spec.protocol.targets()))
+    
     elif (protocol == 'rados') or (protocol == 'rbd'):
-        cmd += ' --ceph-pool {} --ceph-user {} --ceph-key {}'.format(
+        cmd += ' --ceph-pool {} --ceph-user {} --ceph-key {} {}'.format(
             spec.protocol.pool,
             spec.protocol.user,
-            spec.protocol.key)
-    else:
-        cmd += ' --ceph-dir {} --ceph-user {} --ceph-key {}'.format(
+            spec.protocol.key,
+            ' '.join(spec.protocol.targets()))
+    
+    elif protocol == 'cephfs':
+        cmd += ' --ceph-dir {} --ceph-user {} --ceph-key {} {}'.format(
             spec.protocol.subdir,
             spec.protocol.user,
-            spec.protocol.key)
+            spec.protocol.key,
+            ' '.join(spec.protocol.targets()))
+    
+    elif protocol == 'block':
+        cmd += ' --block-device {}'.format(spec.protocol.targets()[0])
 
     if spec.backend.fast_mode:
         cmd += ' --fast-mode'
