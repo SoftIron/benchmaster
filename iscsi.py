@@ -133,9 +133,9 @@ def _mount_images(args):
 def _unmount_images(args):
     print("Unmounting images")
     for s in args.servers:
-        _ssh_cmd(s, args.server_pw, 'unlink {}'.format(args.device_link))
-        _ssh_cmd(s, args.server_pw, 'iscsiadm --mode node --logoutall=all')
-        _ssh_cmd(s, args.server_pw, 'multipath -W')
+        _ssh_cmd(s, args.server_pw, 'unlink {}'.format(args.device_link), check=False)
+        _ssh_cmd(s, args.server_pw, 'iscsiadm --mode node --logoutall=all', check=False)
+        _ssh_cmd(s, args.server_pw, 'multipath -W', check=False)
     print("Unmounted")
                     
 
