@@ -304,7 +304,7 @@ def _fetch_ceph_key(mon, rootpw):
     """ Fetch a key from a monitor """
 
     print("Fetching key from {}:/etc/ceph/ceph.client.admin.keyring".format(mon))
-    cmd =  'sshpass -p ' + rootpw +' ssh -o StrictHostKeyChecking=no root@' + mon 
+    cmd =  'sshpass -p ' + rootpw +' ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@' + mon 
     cmd += " grep key /etc/ceph/ceph.client.admin.keyring | awk '{print $3}'"
 
     rc = subprocess.run(cmd, shell=True, capture_output=True, check=True)
