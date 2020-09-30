@@ -22,7 +22,7 @@ def add_user(username, keyfile, gateway, password):
         We exit on failure. """
 
     cmd =  'sshpass -p ' + password
-    cmd += ' ssh -o StrictHostKeyChecking=no root@' + gateway
+    cmd += ' ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@' + gateway
     cmd += ' radosgw-admin user create --uid={} --display-name={}'.format(username, username) 
 
     rc = subprocess.run(cmd, shell=True, capture_output=True, check=True)
