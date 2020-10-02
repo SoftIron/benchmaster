@@ -47,7 +47,6 @@ class Spec:
 
 
 
-
 class TimeSpec:
     """ Runtype spec implementation for Time based benchmarks """
     def __init__(self, runtime, ramp_up, ramp_down):
@@ -71,7 +70,6 @@ class TimeSpec:
 
 
 
-
 class OpsSpec:
     """ Runtype spec implementation for Operation Count based benchmarks """
     def __init__(self, ops):
@@ -81,7 +79,6 @@ class OpsSpec:
     def name(self):         return "ops"
     def schedule(self):     return "Count " + str(self.ops)
     def flatten(self):      return [OpsSpec(o) for o in self.ops.split(',')]
-
 
 
 
@@ -100,7 +97,6 @@ class S3Spec:
 
     # Methods that abstract information across protocols.
     def targets(self):       return self.gateways
-
 
 
     
@@ -123,10 +119,11 @@ class RadosSpec:
 
 class RbdSpec:
     """ Protocol spec implementation for Rbd """
-    def __init__(self, user, key, pool, monitors):
+    def __init__(self, user, key, pool, datapool, monitors):
         self.user = user
         self.key = key
         self.pool = pool
+        self.datapool = datapool
         self.monitors = monitors
 
     def __repr__(self):      return str(vars(self))
@@ -166,6 +163,20 @@ class BlockSpec:
 
     # Methods that abstract information across protocols.
     def targets(self):       return [self.device]
+
+
+
+class FileSpec:
+    """ Protocol spec implementation for locally mounted file systems """
+    def __init__(self, directory):
+        self.directory = directory
+
+    def __repr__(self):      return str(vars(self))
+    def name(self):          return "file"
+    def flatten(self):       return [self]
+
+    # Methods that abstract information across protocols.
+    def targets(self):       return [self.directory]
 
 
 

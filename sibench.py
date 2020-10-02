@@ -16,7 +16,7 @@ def run(spec):
     # Check that this is something we support, and convert cosbench storage type ids into sibench ones. 
 
     protocol = spec.protocol.name()
-    if protocol not in ['s3', 'rados', 'rbd', 'cephfs', 'block']:
+    if protocol not in ['s3', 'rados', 'rbd', 'cephfs', 'block', 'file']:
         print('Bad storage type for sibench: {}'.format(protocol))
         exit(-1) 
 
@@ -48,13 +48,21 @@ def run(spec):
             spec.protocol.secret_key,
             ' '.join(spec.protocol.targets()))
     
-    elif (protocol == 'rados') or (protocol == 'rbd'):
+    elif protocol == 'rados':
         cmd += ' --ceph-pool {} --ceph-user {} --ceph-key {} {}'.format(
             spec.protocol.pool,
             spec.protocol.user,
             spec.protocol.key,
             ' '.join(spec.protocol.targets()))
     
+    elif protocol == 'rbd':
+        cmd += ' --ceph-pool {} --ceph-datapool "{}" --ceph-user {} --ceph-key {} {}'.format(
+            spec.protocol.pool,
+            spec.protocol.datapool,
+            spec.protocol.user,
+            spec.protocol.key,
+            ' '.join(spec.protocol.targets()))
+
     elif protocol == 'cephfs':
         cmd += ' --ceph-dir {} --ceph-user {} --ceph-key {} {}'.format(
             spec.protocol.subdir,
@@ -64,6 +72,9 @@ def run(spec):
     
     elif protocol == 'block':
         cmd += ' --block-device {}'.format(spec.protocol.targets()[0])
+
+    elif protocol == 'file':
+        cmd += ' --file-dir {}'.format(spec.protocol.targets()[0])
 
     if spec.backend.fast_mode:
         cmd += ' --fast-mode'

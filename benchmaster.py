@@ -40,7 +40,7 @@ Usage:
                                        <description> <monitor> ...
     benchmaster.py rbd sibench time    [-v] [-s size] [-o count] [-r time] [-u time] [-d time]
                                        [--sheet name] [-g file]
-                                       [--ceph-pool pool] [--ceph-user user --ceph-key key | --ceph-rootpw pw]
+                                       [--ceph-pool pool] [--ceph-datapool pool] [--ceph-user user --ceph-key key | --ceph-rootpw pw]
                                        [--sibench-workers factor] [--sibench-port port] [--sibench-bandwidth bw] [--sibench-servers servers]
                                        [--sibench-fastmode]
                                        <description> <monitor> ...
@@ -55,6 +55,11 @@ Usage:
                                        [--sibench-workers factor] [--sibench-port port] [--sibench-bandwidth bw] [--sibench-servers servers]
                                        [--sibench-fastmode]
                                        <description> <block-device>
+    benchmaster.py file sibench time   [-v] [-s size] [-o count] [-r time] [-u time] [-d time]
+                                       [--sheet name] [-g file]
+                                       [--sibench-workers factor] [--sibench-port port] [--sibench-bandwidth bw] [--sibench-servers servers]
+                                       [--sibench-fastmode]
+                                       <description> <file-dir>
     benchmaster.py iscsi setup         [-v] 
                                        [--iscsi-image-size SIZE] [--iscsi-device-link LINK]
                                        [--ceph-pool pool] [--ceph-rootpw PW]
@@ -89,7 +94,8 @@ Options:
     --s3-credentials FILE          File containing S3 keys                                           [default: s3creds.json]
     --s3-port PORT                 The port on which to connect to the S3 gateways                   [default: 7480]
     --s3-bucket BUCKET             The bucket to use to on S3                                        [default: benchmark]
-    --ceph-pool POOL               Ceph pool to use. MUST end in '1' if using Cosbench               [default: benchmark1]
+    --ceph-pool POOL               Ceph pool to use. MUST end in '1' if using Cosbench               [default: benchmark]
+    --ceph-datapool POOL           Ceph pool to use for non-metadata when using RBD with EC
     --ceph-user USER               Ceph user for rados testing                                       [default: admin]
     --ceph-rootpw PW               Root password for ceph nodes to fetch keys or create ueers        [default: linux]
     --ceph-key KEY                 Ceph key, normally from /etc/ceph/ceph.client.admnin.keyring
@@ -179,6 +185,7 @@ def _run_sweep(args):
     for s in spec.flatten():
         # Use json as a convenient way to pretty print a heirarchical class structure.
         jstr = str(s).replace("'", '"').replace('False', 'false').replace('True', 'true')
+        print(jstr)
         print("Running Benchmark:\n" + json.dumps(json.loads(jstr), indent=3))
         _run_single(args, s)
     exit(0)
@@ -206,13 +213,19 @@ def _make_protocol_spec(args):
         return spec.RadosSpec(user, key, args['--ceph-pool'], args['<monitor>'])
 
     if args['rbd']:
-        return spec.RbdSpec(user, key, args['--ceph-pool'], args['<monitor>'])
+        if not args['--ceph-datapool']:
+            args['--ceph-datapool'] = ''
+
+        return spec.RbdSpec(user, key, args['--ceph-pool'], args['--ceph-datapool'], args['<monitor>'])
 
     if args['cephfs']:
         return spec.CephFSSpec(user, key, args['--ceph-dir'], args['<monitor>'])
 
     if args['block']:
         return spec.BlockSpec(args['<block-device>'])
+
+    if args['file']:
+        return spec.FileSpec(args['<file-dir>'])
 
     print("Not a known protocol")
     exit(-1)
@@ -345,6 +358,10 @@ def _handle_block(args):
     if args['time']:         _run_sweep(args)
 
 
+def _handle_file(args):
+    if args['time']:         _run_sweep(args)
+
+
 def _handle_sheet(args):
     if args['create']:       _sheet_create(args)
 
@@ -376,5 +393,6 @@ if __name__ == "__main__":
     elif args['cephfs']:  _handle_cephfs(args)
     elif args['sheet']:   _handle_sheet(args)
     elif args['block']:   _handle_block(args)
+    elif args['file']:    _handle_file(args)
     elif args['iscsi']:   _handle_iscsi(args)
 
