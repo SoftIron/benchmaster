@@ -99,11 +99,11 @@ def _mount_images(args):
 
         # Log in to the active and secondary ISCSI targets.
         for mode in ['act', 'nop']:
-            login_cmd = 'iscsiadm --mode node --login --target iqn.2014-01.com.softiron.iscsi_gw_v0:{}-{}-{}'.format(args.pool, name, mode)
+            login_cmd = 'iscsiadm --mode node --login --target iqn.2014-01.com.softiron:{}-{}-{}'.format(args.pool, name, mode)
             _ssh_cmd(s, args.server_pw, login_cmd)
     
         # Determine which devices they were assigned to.
-        disk_cmd = 'ls -l /dev/disk/by-path/ | grep iqn.2014-01.com.softiron.iscsi_gw_v0:{}-{}'.format(args.pool, name)
+        disk_cmd = 'ls -l /dev/disk/by-path/ | grep iqn.2014-01.com.softiron:{}-{}'.format(args.pool, name)
         lines = _ssh_cmd(s, args.server_pw, disk_cmd)
 
         mp_cmd = 'multipath -a'
