@@ -4,104 +4,105 @@
 
 Usage:
     benchmaster.py sheet create        [-v] [-g FILE] <sheetname> <account> ...
-    benchmaster.py s3 adduser          [-v] [--ceph-rootpw PW] <name> <gateway>
+    benchmaster.py s3 adduser          [-v] [--ceph-root-password PW] <name> <gateway>
     benchmaster.py s3 test-write       [-v] [--s3-port PORT] [--s3-bucket BUCKET] [--s3-credentials FILE] <gateway>
-    benchmaster.py s3 cosbench ops     [-v] [-s SIZE] [-o COUNT] [-c COUNT]
+    benchmaster.py s3 cosbench ops     [-v] [-s SIZE] [-c COUNT] [-x MIX]
+                                       [--sheet NAME] [-g FILE]
+                                       [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
+                                       [--cosbench-op-count COUNT] [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
+                                       <description> <gateway> ...
+    benchmaster.py s3 cosbench time    [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
                                        [--sheet NAME] [-g FILE]
                                        [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
                                        [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
                                        <description> <gateway> ...
-    benchmaster.py s3 cosbench time    [-v] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME]
-                                       [--sheet NAME] [-g FILE]
-                                       [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
-                                       [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
-                                       <description> <gateway> ...
-    benchmaster.py s3 sibench time     [-v] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME]
+    benchmaster.py s3 sibench time     [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
                                        [--sheet NAME] [-g FILE]
                                        [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
                                        [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
-                                       [--sibench-fastmode]
+                                       [--sibench-skip-read-verification]
                                        <description> <gateway> ...
-    benchmaster.py rados cosbench ops  [-v] [-s SIZE] [-o COUNT] [-c COUNT]
+    benchmaster.py rados cosbench ops  [-v] [-s SIZE] [-c COUNT] [-x MIX]
                                        [--sheet NAME] [-g FILE]
-                                       [--ceph-pool POOL] [--ceph-user USER --ceph-key KEY | --ceph-rootpw PW]
+                                       [--ceph-pool POOL] [--ceph-user USER --ceph-key KEY | --ceph-root-password PW]
+                                       [--cosbench-op-count COUNT] [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
+                                       <description> <monitor> ...
+    benchmaster.py rados cosbench time [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
+                                       [--sheet NAME] [-g FILE]
+                                       [--ceph-pool POOL] [--ceph-user USER --ceph-key KEY | --ceph-root-password PW]
                                        [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
                                        <description> <monitor> ...
-    benchmaster.py rados cosbench time [-v] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME]
+    benchmaster.py rados sibench time  [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
                                        [--sheet NAME] [-g FILE]
-                                       [--ceph-pool POOL] [--ceph-user USER --ceph-key KEY | --ceph-rootpw PW]
-                                       [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
-                                       <description> <monitor> ...
-    benchmaster.py rados sibench time  [-v] [-s size] [-o count] [-r time] [-u time] [-d time]
-                                       [--sheet name] [-g file]
-                                       [--ceph-pool pool] [--ceph-user user --ceph-key key | --ceph-rootpw pw]
-                                       [--sibench-workers factor] [--sibench-port port] [--sibench-bandwidth bw] [--sibench-servers servers]
-                                       [--sibench-fastmode]
-                                       <description> <monitor> ...
-    benchmaster.py rbd sibench time    [-v] [-s size] [-o count] [-r time] [-u time] [-d time]
-                                       [--sheet name] [-g file]
-                                       [--ceph-pool pool] [--ceph-datapool pool] [--ceph-user user --ceph-key key | --ceph-rootpw pw]
-                                       [--sibench-workers factor] [--sibench-port port] [--sibench-bandwidth bw] [--sibench-servers servers]
-                                       [--sibench-fastmode]
-                                       <description> <monitor> ...
-    benchmaster.py cephfs sibench time [-v] [-s SIZE] [-o COUNT] [-r TIME] [-u TIME] [-d TIME]
-                                       [--sheet NAME] [-g FILE]
-                                       [--ceph-dir DIR] [--ceph-user USER --ceph-key KEY | --ceph-rootpw PW]
+                                       [--ceph-pool POOL] [--ceph-user user --ceph-key key | --ceph-root-password PW]
                                        [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
-                                       [--sibench-fastmode]
+                                       [--sibench-skip-read-verification]
                                        <description> <monitor> ...
-    benchmaster.py block sibench time  [-v] [-s size] [-o count] [-r time] [-u time] [-d time]
-                                       [--sheet name] [-g file]
-                                       [--sibench-workers factor] [--sibench-port port] [--sibench-bandwidth bw] [--sibench-servers servers]
-                                       [--sibench-fastmode]
+    benchmaster.py rbd sibench time    [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
+                                       [--sheet NAME] [-g FILE]
+                                       [--ceph-pool POOL] [--ceph-datapool POOL] [--ceph-user user --ceph-key key | --ceph-root-password PW]
+                                       [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
+                                       [--sibench-skip-read-verification]
+                                       <description> <monitor> ...
+    benchmaster.py cephfs sibench time [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
+                                       [--sheet NAME] [-g FILE]
+                                       [--ceph-dir DIR] [--ceph-user USER --ceph-key KEY | --ceph-root-password PW]
+                                       [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
+                                       [--sibench-skip-read-verification]
+                                       <description> <monitor> ...
+    benchmaster.py block sibench time  [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
+                                       [--sheet NAME] [-g FILE]
+                                       [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
+                                       [--sibench-skip-read-verification]
                                        <description> <block-device>
-    benchmaster.py file sibench time   [-v] [-s size] [-o count] [-r time] [-u time] [-d time]
-                                       [--sheet name] [-g file]
-                                       [--sibench-workers factor] [--sibench-port port] [--sibench-bandwidth bw] [--sibench-servers servers]
-                                       [--sibench-fastmode]
+    benchmaster.py FILE sibench time   [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
+                                       [--sheet NAME] [-g FILE]
+                                       [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
+                                       [--sibench-skip-read-verification]
                                        <description> <file-dir>
     benchmaster.py iscsi setup         [-v] 
                                        [--iscsi-image-size SIZE] [--iscsi-device-link LINK]
-                                       [--ceph-pool pool] [--ceph-rootpw PW]
-                                       [--sibench-servers SERVERS] [--sibench-rootpw PW]
+                                       [--ceph-pool POOL] [--ceph-root-password PW]
+                                       [--sibench-servers SERVERS] [--sibench-root-password PW]
                                        <gateway> ...
     benchmaster.py iscsi teardown      [-v] 
                                        [--iscsi-device-link LINK]
-                                       [--ceph-pool pool] [--ceph-rootpw PW]
-                                       [--sibench-servers SERVERS] [--sibench-rootpw PW]
+                                       [--ceph-pool POOL] [--ceph-root-password PW]
+                                       [--sibench-servers SERVERS] [--sibench-root-password PW]
                                        <gateway> ...
     benchmaster.py -h | --help
 
 Options:
-    -h, --help                     Show usage
-    -v, --verbose                  Show verbose output
-    -s, --size SIZE                Object size to test                                    sweepable  [default: 1M]
-    -o, --objects COUNT            Number of objects in the pool                          sweepable  [default: 5000]
-    -r, --run-time TIME            Seconds for the test (does not include ramp up/down)   sweepable  [default: 120]
-    -u, --ramp-up TIME             Seconds at start of test where we do not record        sweepable  [default: 20]
-    -d, --ramp-down TIME           Seconds at end of test where we do not record          sweepable  [default: 10]
-    -c, --count COUNT              Numboer of ops to perform in the test                  sweepable  [default: 1000]
-    -g, --google-credentials FILE  File containing Google Sheet credentials                          [default: gcreds.json]
-    --sheet NAME                   Google spreadsheet to which we will upload results  
-    --cosbench-workers COUNT       The number of workers to use for cosbench              sweepable  [default: 500]
-    --cosbench-xmlfile FILE        The name of the XML file to write out for Cosbench                [default: cosbench.xml]
-    --sibench-servers SERVERS      A comma-separated list of sibench servers                         [default: localhost]
-    --sibench-port PORT            The port on which to connect to the sibench servers               [default: 5150]
-    --sibench-bandwidth BW         The bandwidth limit in units of K, M or G bits/s       sweepable  [default: 0]
-    --sibench-workers FACTOR       Workers per server = factor x no of cores.             sweepable  [default: 1.0]
-    --sibench-fastmode             Disable read validation for speed.    
-    --sibench-rootpw PW            Root password for the sibench servers                             [default: linux]
-    --s3-credentials FILE          File containing S3 keys                                           [default: s3creds.json]
-    --s3-port PORT                 The port on which to connect to the S3 gateways                   [default: 7480]
-    --s3-bucket BUCKET             The bucket to use to on S3                                        [default: benchmark]
-    --ceph-pool POOL               Ceph pool to use. MUST end in '1' if using Cosbench               [default: benchmark]
-    --ceph-datapool POOL           Ceph pool to use for non-metadata when using RBD with EC
-    --ceph-user USER               Ceph user for rados testing                                       [default: admin]
-    --ceph-rootpw PW               Root password for ceph nodes to fetch keys or create ueers        [default: linux]
-    --ceph-key KEY                 Ceph key, normally from /etc/ceph/ceph.client.admnin.keyring
-    --ceph-dir DIR                 Directory in a CephFS filesystem to use                           [default: benchmark]
-    --iscsi-image-size SIZE        Size of the RBD images we create for iscsi to mount               [default: 1G]
-    --iscsi-device-link LINK       Link to create on the sibench servers to mount iscsi              [default: /tmp/sibench-iscsi]
+    -h, --help                        Show usage
+    -v, --verbose                     Show verbose output
+    -s, --object-size SIZE            Size oc the objects in the test                           sweepable  [default: 1M]
+    -c, --object-count COUNT          Number of objects in the test                             sweepable  [default: 5000]
+    -r, --run-time TIME               Seconds for the test (does not include ramp up/down)      sweepable  [default: 120]
+    -u, --ramp-up TIME                Seconds at start of test where we do not record           sweepable  [default: 20]
+    -d, --ramp-down TIME              Seconds at end of test where we do not record             sweepable  [default: 10]
+    -x, --read-write-mix MIX          Percentage of reads, or 0 for separate read/write passes  sweepable  [default: 0]
+    -g, --google-credentials FILE     File containing Google Sheet credentials                             [default: gcreds.json]
+    --sheet NAME                      Google spreadsheet to which we will upload results  
+    --cosbench-op-count COUNT         Numboer of ops to perform in the test                     sweepable  [default: 1000]
+    --cosbench-workers COUNT          The number of workers to use for cosbench                 sweepable  [default: 500]
+    --cosbench-xmlfile FILE           The name of the XML file to write out for Cosbench                   [default: cosbench.xml]
+    --sibench-servers SERVERS         A comma-separated list of sibench servers                            [default: localhost]
+    --sibench-port PORT               The port on which to connect to the sibench servers                  [default: 5150]
+    --sibench-bandwidth BW            The bandwidth limit in units of K, M or G bits/s          sweepable  [default: 0]
+    --sibench-workers FACTOR          Workers per server = factor x no of cores.                sweepable  [default: 1.0]
+    --sibench-skip-read-verification  Disable read validation for speed.    
+    --sibench-root-password PW        Root password for the sibench servers                                [default: linux]
+    --s3-credentials FILE             File containing S3 keys                                              [default: s3creds.json]
+    --s3-port PORT                    The port on which to connect to the S3 gateways                      [default: 7480]
+    --s3-bucket BUCKET                The bucket to use to on S3                                           [default: benchmark]
+    --ceph-pool POOL                  Ceph pool to use. MUST end in '1' if using Cosbench                  [default: benchmark]
+    --ceph-datapool POOL              Ceph pool to use for non-metadata when using RBD with EC
+    --ceph-user USER                  Ceph user for rados testing                                          [default: admin]
+    --ceph-root-password PW           Root password for ceph nodes to fetch keys or create ueers           [default: linux]
+    --ceph-key KEY                    Ceph key, normally from /etc/ceph/ceph.client.admnin.keyring
+    --ceph-dir DIR                    Directory in a CephFS filesystem to use                              [default: benchmark]
+    --iscsi-image-size SIZE           Size of the RBD images we create for iscsi to mount                  [default: 1G]
+    --iscsi-device-link LINK          Link to create on the sibench servers to mount iscsi                 [default: /tmp/sibench-iscsi]
 """
 
 import boto
@@ -163,15 +164,15 @@ def _run_single(args, spec):
     result.start_time = str(start_time)
     result.end_time = str(datetime.now())
 
+    # Use a quick json decode/encode to allow easy pretty printing.  
+    # We're not actually using the json here.
+    print("Result:\n" + json.dumps(json.loads(str(result).replace("'", '"')), indent=3))
+
     if sheet is None:
         print("No spreadsheet in use, skipping upload.")
     else:
         print("Uploading to google spreadsheet")
         spreadsheet.append_result(sheet, result)
-
-    # Use a quick json decode/encode to allow easy pretty printing.  
-    # We're not actually using the json here.
-    print("Result:\n" + json.dumps(json.loads(str(result).replace("'", '"')), indent=3))
 
 
 
@@ -206,7 +207,7 @@ def _make_protocol_spec(args):
             key = args['--ceph-key']
             user = args['--ceph-user']
         else:
-            key = _fetch_ceph_key(args['<monitor>'][0], args['--ceph-rootpw'])
+            key = _fetch_ceph_key(args['<monitor>'][0], args['--ceph-root-password'])
             user = 'admin'
 
     if args['rados']:
@@ -244,7 +245,7 @@ def _make_backend_spec(args):
             args['--sibench-servers'].split(','), 
             args['--sibench-bandwidth'],
             args['--sibench-workers'],
-            args['--sibench-fastmode'])
+            args['--sibench-skip-read-verification'])
 
     print("Not a known backend")
     exit(-1)
@@ -254,7 +255,7 @@ def _make_backend_spec(args):
 def _make_runtype_spec(args):
     """ Parse our the runtyoe specific parts of our command line arguments. """
 
-    if args['ops']:  return spec.OpsSpec(args['--count'])
+    if args['ops']:  return spec.OpsSpec(args['--op-count'])
     if args['time']: return spec.TimeSpec(args['--run-time'], args['--ramp-up'], args['--ramp-down'])
     print("Not a known run type")
     exit(-1)
@@ -267,8 +268,9 @@ def _make_spec(args):
             _make_runtype_spec(args), 
             _make_backend_spec(args), 
             _make_protocol_spec(args), 
-            args['--size'], 
-            args['--objects'],
+            args['--object-size'], 
+            args['--object-count'],
+            args['--read-write-mix'],
             args['<description>'])
 
 
@@ -278,7 +280,7 @@ def _s3_adduser(args):
     username = args['<name>']
     cred_file = args['--s3-credentials']
     gateway = args['<gateway>'][0]
-    password = args['--ceph-rootpw']
+    password = args['--ceph-root-password']
     
     print("Adding user {} on rados gateway {} and storing keys in {}".format(username, gateway, cred_file))
     s3.add_user(username, cred_file, gateway, password)
@@ -369,9 +371,9 @@ def _handle_sheet(args):
 def _handle_iscsi(args):
     iargs = iscsi.IscsiArgs(
             args['<gateway>'],
-            args['--ceph-rootpw'],
+            args['--ceph-root-password'],
             args['--sibench-servers'].split(','),
-            args['--sibench-rootpw'],
+            args['--sibench-root-password'],
             args['--ceph-pool'],
             args['--iscsi-image-size'],
             args['--iscsi-device-link'])
@@ -382,7 +384,8 @@ def _handle_iscsi(args):
 
 
 if __name__ == "__main__":
-    args = docopt(__doc__, version='benchmaster 0.0.1', options_first=False)
+    args = docopt(__doc__, version='benchmaster 1.0.0', options_first=False)
+
     if args['--verbose']:
         print(args)
 

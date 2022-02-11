@@ -13,19 +13,25 @@ class Result:
     def __init__(self, spec):
         self.protocol = spec.protocol.name()
         self.backend = spec.backend.name()
-        self.size = spec.size
+        self.object_size = spec.object_size
         self.object_count = spec.object_count
         self.workers = spec.backend.workers()
         self.schedule = spec.runtype.schedule()
         self.targets = len(spec.protocol.targets())
         self.description = spec.description
+        
+        if spec.read_write_mix == '0':
+            self.read_write_mix = "Separate passes"
+        else:
+            self.read_write_mix = "{}:{}".format(spec.read_write_mix, 100 - int(spec.read_write_mix))
+
 
     def __repr__(self): return str(vars(self))
 
 
     def columns():
         """ Returns an array of the column names we want for google sheets. """
-        return ['ID', 'Protocol', 'Backend', 'Size', 'Object Pool', 'Workers', 'Schedule', 'Targets',
+        return ['ID', 'Protocol', 'Backend', 'Size', 'Object Pool', 'Workers', 'Schedule', 'Targets', 'Read/Write Mix',
                 'Wr Bandwidth Gb/s', 'Wr ResTime Min ms', 'Wr ResTime Max ms', 'Wr ResTime95 ms', 'Wr ResTimeAvg ms', 'Wr Successes', 'Wr Failures',
                 'Rd Bandwidth Gb/s', 'Rd ResTime Min ms', 'Rd ResTime Max ms', 'Rd ResTime95 ms', 'Rd ResTimeAvg ms', 'Rd Successes', 'Rd Failures',
                 'Description', 'Start', 'End']
@@ -38,7 +44,7 @@ class Result:
         read_dark   = (0.75, 0.9, 0.75)
         read_light  = (0.85, 0.95, 0.85)
 
-        return [None, None, None, None, None, None, None, None,
+        return [None, None, None, None, None, None, None, None, None,
                 write_dark, write_light, write_light, write_light, write_light, write_light, write_light,
                 read_dark, read_light, read_light, read_light, read_light, read_light, read_light,
                 None, None, None]
@@ -46,7 +52,11 @@ class Result:
 
     def values(self):
         """ Return the values for a row, formatted as we want them. """
-        return [self.id, self.protocol, self.backend, self.size, self.object_count, self.workers, self.schedule, self.targets,
+    
+        # We need to fix up the read/write mix field so that it won't be interpreted as a date by google sheets.
+        rw_fixed = "'{}".format(self.read_write_mix)
+
+        return [self.id, self.protocol, self.backend, self.object_size, self.object_count, self.workers, self.schedule, self.targets, rw_fixed,
                 self.write.bandwidth, self.write.res_min, self.write.res_max, self.write.res_95, self.write.res_avg, self.write.successes, self.write.failures,
                 self.read.bandwidth, self.read.res_min, self.read.res_max, self.read.res_95, self.read.res_avg, self.read.successes, self.read.failures,
                 self.description, str(self.start_time), str(self.end_time)]

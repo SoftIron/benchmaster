@@ -27,11 +27,12 @@ def run(spec):
 
     # From here on we should be good, so let's build our command line to invoke sibench
 
-    cmd = '{} {} run -s{} -o{} -r{} -u{} -d{} -w{} -b{} -jsibench.json --servers {} -p {}'.format(
+    cmd = '{} {} run -s{} -c{} -x{} -r{} -u{} -d{} -w{} -b{} -osibench.json --servers {} -p {}'.format(
             sibench_binary,
             protocol,
-            spec.size,
+            spec.object_size,
             spec.object_count,
+            spec.read_write_mix,
             spec.runtype.runtime,
             spec.runtype.ramp_up,
             spec.runtype.ramp_down,
@@ -76,8 +77,8 @@ def run(spec):
     elif protocol == 'file':
         cmd += ' --file-dir {}'.format(spec.protocol.targets()[0])
 
-    if spec.backend.fast_mode:
-        cmd += ' --fast-mode'
+    if spec.backend.skip_read_verification:
+        cmd += ' --skip-read-verification'
 
     print("Running command: {}".format(cmd))
 

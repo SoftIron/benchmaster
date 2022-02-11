@@ -24,12 +24,13 @@ import sibench
 
 class Spec:
     """ Master spec object. """
-    def __init__(self, runtype, backend, protocol, size, object_count, description):
+    def __init__(self, runtype, backend, protocol, object_size, object_count, read_write_mix, description):
         self.runtype = runtype
         self.backend = backend
         self.protocol = protocol
-        self.size = size
+        self.object_size = object_size
         self.object_count = object_count
+        self.read_write_mix = read_write_mix
         self.description = description
 
     def __repr__(self): return str(vars(self))
@@ -40,9 +41,10 @@ class Spec:
         for r in self.runtype.flatten():
             for b in self.backend.flatten():
                 for p in self.protocol.flatten():
-                    for s in self.size.split(','):
+                    for s in self.object_size.split(','):
                         for c in self.object_count.split(','):
-                            results.append(Spec(r, b, p, s, c, self.description))
+                            for x in self.read_write_mix.split(','):
+                                results.append(Spec(r, b, p, s, c, x, self.description))
         return results
 
 
@@ -182,12 +184,12 @@ class FileSpec:
 
 class SibenchSpec:
     """ Backend spec implementation for Sibench """
-    def __init__(self, port, servers, bandwidth, worker_factor, fast_mode):
+    def __init__(self, port, servers, bandwidth, worker_factor, skip_read_verification):
         self.port = port
         self.servers = servers
         self.bandwidth = bandwidth
         self.worker_factor = worker_factor
-        self.fast_mode = fast_mode
+        self.skip_read_verification = skip_read_verification
 
     def __repr__(self):     return str(vars(self))
     def name(self):         return "sibench"
@@ -195,7 +197,7 @@ class SibenchSpec:
         results = []
         for b in self.bandwidth.split(','):
             for w in self.worker_factor.split(','):
-                results.append(SibenchSpec(self.port, self.servers, b, w, self.fast_mode))
+                results.append(SibenchSpec(self.port, self.servers, b, w, self.skip_read_verification))
         return results
 
 

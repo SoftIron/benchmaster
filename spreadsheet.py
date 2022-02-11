@@ -65,4 +65,5 @@ def append_result(sheet, result):
 
     # The 'USER_ENTERED' flag means that things like dates and times will be picked up as such by the spreadsheet.
     # If we used the default value (or 'RAW') it would treat dates as strings.
+
     ws.append_row(result.values(), value_input_option='USER_ENTERED')   

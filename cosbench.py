@@ -19,17 +19,21 @@ class CosbenchValues:
     """ Pull out all the stuff we need from the spec and convert to Cosbench's view of the world. """
 
     def __init__(self, spec):
-        if not re.match("\d+[KMG]", spec.size):
-            print("Invalid object size for cosbench: {}.  Sizes should be digits followed by K, M or G.".format(spec.size))
+        if not re.match("\d+[KMG]", spec.object_size):
+            print("Invalid object size for cosbench: {}.  Sizes should be digits followed by K, M or G.".format(spec.object_size))
             exit(-1) 
         
         # Extract our common info
-        self.size_digits = spec.size[:-1]
-        self.size_units = spec.size[-1:]
+        self.object_size_digits = spec.object_size[:-1]
+        self.object_size_units = spec.object_size[-1:]
         self.object_count = spec.object_count
+        self.read_write_mix  = int(spec.read_write_mix)
         self.xml_file = spec.backend.xml_file
         self.workers = spec.backend.workers()
         self.targets = spec.protocol.targets()
+
+        if self.read_write_mix > 100: self.read_write_mix = 100
+        if self.read_write_mix < 0: self.read_write_mix = 0
 
         # Extract our runtype info
         r = spec.runtype
@@ -126,10 +130,19 @@ def _prepare(cv):
     result += '      <work type="prepare" workers="{}" '.format(cv.workers)
     result += 'config="cprefix={};containers=r(1,1;'.format(cv.container_prefix)
     result += 'oprefix=CB-;objects=r(1,{});'.format(cv.object_count)
-    result += 'sizes=c({}){}B">\n'.format(cv.size_digits, cv.size_units)
+    result += 'sizes=c({}){}B">\n'.format(cv.object_size_digits, cv.object_size_units)
     result += '        {}'.format(_storage(cv, cv.targets[0]))
     result += '      </work>\n\n'
     result += '    </workstage>\n\n'
+    return result
+
+
+
+def _operation(cv, test_type, ratio):
+    result  = '        <operation type="{}" ratio={}" '.format(test_type, ratio)
+    result += 'config="cprefix={};containers=c(1);'.format(cv.container_prefix)
+    result += 'oprefix=CB-;objects=r(1,{});'.format(cv.object_count)
+    result += 'sizes=c({}){}B;content=zero"/>\n'.format(cv.object_size_digits, cv.object_size_units)
     return result
 
 
@@ -142,10 +155,13 @@ def _work(cv, test_type):
         result += '      <work name="{}-{}" workers="{}" division="container" '.format(test_type, t, cv.workers)
         result += cv.runtype + '>\n'
         result += '        ' + _storage(cv, t)
-        result += '        <operation type="{}" ratio="100" '.format(test_type)
-        result += 'config="cprefix={};containers=c(1);'.format(cv.container_prefix)
-        result += 'oprefix=CB-;objects=r(1,{});'.format(cv.object_count)
-        result += 'sizes=c({}){}B;content=zero"/>\n'.format(cv.size_digits, cv.size_units)
+
+        if test_type == 'read/write':
+            result += _operation(cv, "read", cv.read_write_mix)
+            result += _operation(cv, "write", 100 - cv.read_write_mix)
+        else:
+            result += _operation(cv, test_type, 100)
+
         result += '      </work>\n'
     
     result += '    </workstage>\n\n'
@@ -181,9 +197,16 @@ def _generate_xml(cv):
     with open(cv.xml_file, "w") as f:
         f.write(_header(cv))
         if cv.do_create: f.write(_bucket_creation(cv))
-        if cv.runtype == 'time': f.write(_prepare(cv))
-        f.write(_work(cv, "write"))
-        f.write(_work(cv, "read"))
+
+        if cv.read_write_mix == 0:
+            if cv.runtype == 'time':
+                f.write(_prepare(cv))
+            f.write(_work(cv, "write"))
+            f.write(_work(cv, "read"))
+        else:
+            f.write(_prepare(cv))
+            f.write(_work(cv, "read/write"))
+
         f.write(_cleanup(cv))
         if cv.do_dispose: f.write(_dispose(cv))
         f.write(_footer())
