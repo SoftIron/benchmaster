@@ -139,7 +139,7 @@ def _prepare(cv):
 
 
 def _operation(cv, test_type, ratio):
-    result  = '        <operation type="{}" ratio={}" '.format(test_type, ratio)
+    result  = '        <operation type="{}" ratio="{}" '.format(test_type, ratio)
     result += 'config="cprefix={};containers=c(1);'.format(cv.container_prefix)
     result += 'oprefix=CB-;objects=r(1,{});'.format(cv.object_count)
     result += 'sizes=c({}){}B;content=zero"/>\n'.format(cv.object_size_digits, cv.object_size_units)
