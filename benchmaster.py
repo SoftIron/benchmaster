@@ -55,7 +55,7 @@ Usage:
                                        [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
                                        [--sibench-skip-read-verification]
                                        <description> <block-device>
-    benchmaster.py FILE sibench time   [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
+    benchmaster.py file sibench time   [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
                                        [--sheet NAME] [-g FILE]
                                        [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
                                        [--sibench-skip-read-verification]
