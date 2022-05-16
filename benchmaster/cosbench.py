@@ -4,13 +4,13 @@ import json
 import numbers
 import os
 import re
-import s3
-import spec
+import benchmaster.s3 as s3
+import benchmaster.spec as s3
 import subprocess
 import time
 
 from datetime import datetime
-from result import Result, DirectionResult
+from benchmaster.result import Result, DirectionResult
 
 _cosbench_dir = '/usr/share/cosbench'
 

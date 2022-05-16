@@ -108,16 +108,17 @@ Options:
 import boto
 import boto.s3.connection
 import copy
-import cosbench
-import iscsi
 import json
 import re
 import pprint
-import spec
-import spreadsheet
 import subprocess
 import sys
-import s3
+from benchmaster import __version__
+import benchmaster.cosbench as cosbench
+import benchmaster.iscsi as iscsi
+import benchmaster.spreadsheet as spreadsheet
+import benchmaster.s3 as s3
+import benchmaster.spec as spec
 
 from docopt import docopt
 from datetime import datetime
@@ -383,8 +384,8 @@ def _handle_iscsi(args):
 
 
 
-if __name__ == "__main__":
-    args = docopt(__doc__, version='benchmaster 1.0.0', options_first=False)
+def main():
+    args = docopt(__doc__, version=f'benchmaster {__version__}', options_first=False)
 
     if args['--verbose']:
         print(args)
@@ -399,3 +400,6 @@ if __name__ == "__main__":
     elif args['file']:    _handle_file(args)
     elif args['iscsi']:   _handle_iscsi(args)
 
+
+if __name__ == "__main__":
+    sys.exit(main())  # pragma: no cover

@@ -1,8 +1,8 @@
 import json
-import spec
+import benchmaster.spec as spec
 import subprocess
 
-from result import Result, DirectionResult
+from benchmaster.result import Result, DirectionResult
 
 
 sibench_binary = 'sibench'

@@ -18,8 +18,8 @@ can treat everything as if it was S3.  (Cosbench is very heavily skewed
 towards S3, and all other protocols must map to its abstractions).
 """
 
-import cosbench
-import sibench
+import benchmaster.cosbench as cosbench
+import benchmaster.sibench as sibench
 
 
 class Spec:
