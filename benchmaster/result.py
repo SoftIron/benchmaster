@@ -61,6 +61,13 @@ class Result:
                 self.read.bandwidth, self.read.res_min, self.read.res_max, self.read.res_95, self.read.res_avg, self.read.successes, self.read.failures,
                 self.description, str(self.start_time), str(self.end_time)]
 
+    def formats():
+        gb_s = "0.00 Gb\/\s"
+        ms = "0 \m\s"
+        return [None, None, None, None, None, None, None, None, None,
+                gb_s, ms, ms, ms, ms, None, None,
+                gb_s, ms, ms, ms, ms, None, None,
+                None, None, None]
 
 
 class DirectionResult:

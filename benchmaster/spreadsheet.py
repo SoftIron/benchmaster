@@ -27,6 +27,14 @@ def create(gconn, sheet_name, accounts):
 
     # Set up the column headings.
 
+    set_format(sheet)
+
+    for a in accounts:
+        sheet.share(a, perm_type='user', role='writer')
+
+    return sheet;
+
+def set_format(sheet):
     columns = Result.columns()
     last_col = chr(ord('A') + len(columns) - 1)
     ws = sheet.get_worksheet(0)
@@ -35,20 +43,16 @@ def create(gconn, sheet_name, accounts):
 
     # Set up formatting for the data
 
-    i = 0
-    for colour in Result.backgrounds():
-        if colour != None:
-            column = chr(i + ord('A'))
-            ws.format('{}2:{}999'.format(column, column), {"backgroundColor": { "red": colour[0], "green": colour[1], "blue": colour[2]}})
-        i += 1
+    for i, (cell_colour, cell_format) in enumerate(zip(Result.backgrounds(), Result.formats())):
+        column = chr(i + ord('A'))
+        column_range = "{}2:{}999".format(column, column)
+        if cell_format:
+            ws.format(column_range,{"numberFormat":{"type":"NUMBER","pattern":cell_format}})
 
-    for a in accounts:
-        sheet.share(a, perm_type='user', role='writer')
-
-    return sheet;
+        if cell_colour:
+            ws.format(column_range, {"backgroundColor": { "red": cell_colour[0], "green": cell_colour[1], "blue": cell_colour[2]}})
 
 
- 
 def open(gconn, sheet_name):
     """ Open an existing sheet on the google connection. """
 
