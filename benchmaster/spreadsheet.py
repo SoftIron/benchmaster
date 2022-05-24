@@ -39,7 +39,9 @@ def set_format(sheet):
     last_col = chr(ord('A') + len(columns) - 1)
     ws = sheet.get_worksheet(0)
     ws.update('A1', [columns], value_input_option="RAW")
-    ws.format('A1:{}1'.format(last_col), {'textFormat': {'bold': True, "fontSize": 10}, "backgroundColor": { "red": 0.7, "green": 0.8, "blue": 1.0 }}) 
+    header_range = 'A1:{}1'.format(last_col)
+
+    ws.format(header_range, {'textFormat': {'bold': True, "fontSize": 10}, "backgroundColor": { "red": 0.7, "green": 0.8, "blue": 1.0 }, "textRotation": {"angle": 60}})
 
     # Set up formatting for the data
 
