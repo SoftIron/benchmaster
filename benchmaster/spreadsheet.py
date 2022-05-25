@@ -35,6 +35,12 @@ def create(gconn, sheet_name, accounts):
     return sheet;
 
 def set_format(sheet):
+    set_headers(sheet)
+    set_columns_size(sheet)
+    set_columns_format(sheet)
+
+
+def set_headers(sheet):
     columns = Result.columns()
     last_col = chr(ord('A') + len(columns) - 1)
     ws = sheet.get_worksheet(0)
@@ -43,8 +49,32 @@ def set_format(sheet):
 
     ws.format(header_range, {'textFormat': {'bold': True, "fontSize": 10}, "backgroundColor": { "red": 0.7, "green": 0.8, "blue": 1.0 }, "textRotation": {"angle": 60}})
 
-    # Set up formatting for the data
+def set_columns_size(sheet):
+    ws = sheet.get_worksheet(0)
 
+    # Autoresize columns
+    sheet_id = ws._properties['sheetId']
+    body = {
+        "requests": [
+            {
+                "autoResizeDimensions": {
+                    "dimensions": {
+                        "sheetId": sheet_id,
+                        "dimension": "COLUMNS",
+                        "startIndex": 0,
+                        "endIndex": len(Result.columns())
+                    }
+                }
+            }
+        ]
+    }
+    sheet.batch_update(body)
+
+
+def set_columns_format(sheet):
+    ws = sheet.get_worksheet(0)
+
+    # Set up formatting for the data
     for i, (cell_colour, cell_format) in enumerate(zip(Result.backgrounds(), Result.formats())):
         column = chr(i + ord('A'))
         column_range = "{}2:{}999".format(column, column)
@@ -73,3 +103,4 @@ def append_result(sheet, result):
     # If we used the default value (or 'RAW') it would treat dates as strings.
 
     ws.append_row(result.values(), value_input_option='USER_ENTERED')   
+    set_columns_size(sheet)
