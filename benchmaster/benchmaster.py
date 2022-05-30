@@ -3,74 +3,74 @@
 """Welcome to the Benchmaster 5000, for all your benchmarking needs.
 
 Usage:
-    benchmaster.py sheet create        [-v] [-g FILE] <sheetname> <account> ...
-    benchmaster.py s3 adduser          [-v] [--ceph-root-password PW] <name> <gateway>
-    benchmaster.py s3 test-write       [-v] [--s3-port PORT] [--s3-bucket BUCKET] [--s3-credentials FILE] <gateway>
-    benchmaster.py s3 cosbench ops     [-v] [-s SIZE] [-c COUNT] [-x MIX]
-                                       [--sheet NAME] [-g FILE]
-                                       [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
-                                       [--cosbench-op-count COUNT] [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
-                                       <description> <gateway> ...
-    benchmaster.py s3 cosbench time    [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
-                                       [--sheet NAME] [-g FILE]
-                                       [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
-                                       [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
-                                       <description> <gateway> ...
-    benchmaster.py s3 sibench time     [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
-                                       [--sheet NAME] [-g FILE]
-                                       [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
-                                       [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
-                                       [--sibench-skip-read-verification]
-                                       <description> <gateway> ...
-    benchmaster.py rados cosbench ops  [-v] [-s SIZE] [-c COUNT] [-x MIX]
-                                       [--sheet NAME] [-g FILE]
-                                       [--ceph-pool POOL] [--ceph-user USER --ceph-key KEY | --ceph-root-password PW]
-                                       [--cosbench-op-count COUNT] [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
-                                       <description> <monitor> ...
-    benchmaster.py rados cosbench time [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
-                                       [--sheet NAME] [-g FILE]
-                                       [--ceph-pool POOL] [--ceph-user USER --ceph-key KEY | --ceph-root-password PW]
-                                       [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
-                                       <description> <monitor> ...
-    benchmaster.py rados sibench time  [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
-                                       [--sheet NAME] [-g FILE]
-                                       [--ceph-pool POOL] [--ceph-user user --ceph-key key | --ceph-root-password PW]
-                                       [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
-                                       [--sibench-skip-read-verification]
-                                       <description> <monitor> ...
-    benchmaster.py rbd sibench time    [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
-                                       [--sheet NAME] [-g FILE]
-                                       [--ceph-pool POOL] [--ceph-datapool POOL] [--ceph-user user --ceph-key key | --ceph-root-password PW]
-                                       [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
-                                       [--sibench-skip-read-verification]
-                                       <description> <monitor> ...
-    benchmaster.py cephfs sibench time [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
-                                       [--sheet NAME] [-g FILE]
-                                       [--ceph-dir DIR] [--ceph-user USER --ceph-key KEY | --ceph-root-password PW]
-                                       [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
-                                       [--sibench-skip-read-verification]
-                                       <description> <monitor> ...
-    benchmaster.py block sibench time  [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
-                                       [--sheet NAME] [-g FILE]
-                                       [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
-                                       [--sibench-skip-read-verification]
-                                       <description> <block-device>
-    benchmaster.py file sibench time   [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
-                                       [--sheet NAME] [-g FILE]
-                                       [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
-                                       [--sibench-skip-read-verification]
-                                       <description> <file-dir>
-    benchmaster.py iscsi setup         [-v] 
-                                       [--iscsi-image-size SIZE] [--iscsi-device-link LINK]
-                                       [--ceph-pool POOL] [--ceph-root-password PW]
-                                       [--sibench-servers SERVERS] [--sibench-root-password PW]
-                                       <gateway> ...
-    benchmaster.py iscsi teardown      [-v] 
-                                       [--iscsi-device-link LINK]
-                                       [--ceph-pool POOL] [--ceph-root-password PW]
-                                       [--sibench-servers SERVERS] [--sibench-root-password PW]
-                                       <gateway> ...
-    benchmaster.py -h | --help
+    benchmaster sheet create        [-v] [-g FILE] <sheetname> <account> ...
+    benchmaster s3 adduser          [-v] [--ceph-root-password PW] <name> <gateway>
+    benchmaster s3 test-write       [-v] [--s3-port PORT] [--s3-bucket BUCKET] [--s3-credentials FILE] <gateway>
+    benchmaster s3 cosbench ops     [-v] [-s SIZE] [-c COUNT] [-x MIX]
+                                    [--sheet NAME] [-g FILE]
+                                    [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
+                                    [--cosbench-op-count COUNT] [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
+                                    <description> <gateway> ...
+    benchmaster s3 cosbench time    [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
+                                    [--sheet NAME] [-g FILE]
+                                    [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
+                                    [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
+                                    <description> <gateway> ...
+    benchmaster s3 sibench time     [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
+                                    [--sheet NAME] [-g FILE]
+                                    [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
+                                    [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
+                                    [--sibench-skip-read-verification]
+                                    <description> <gateway> ...
+    benchmaster rados cosbench ops  [-v] [-s SIZE] [-c COUNT] [-x MIX]
+                                    [--sheet NAME] [-g FILE]
+                                    [--ceph-pool POOL] [--ceph-user USER --ceph-key KEY | --ceph-root-password PW]
+                                    [--cosbench-op-count COUNT] [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
+                                    <description> <monitor> ...
+    benchmaster rados cosbench time [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
+                                    [--sheet NAME] [-g FILE]
+                                    [--ceph-pool POOL] [--ceph-user USER --ceph-key KEY | --ceph-root-password PW]
+                                    [--cosbench-workers COUNT] [--cosbench-xmlfile FILE]
+                                    <description> <monitor> ...
+    benchmaster rados sibench time  [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
+                                    [--sheet NAME] [-g FILE]
+                                    [--ceph-pool POOL] [--ceph-user user --ceph-key key | --ceph-root-password PW]
+                                    [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
+                                    [--sibench-skip-read-verification]
+                                    <description> <monitor> ...
+    benchmaster rbd sibench time    [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
+                                    [--sheet NAME] [-g FILE]
+                                    [--ceph-pool POOL] [--ceph-datapool POOL] [--ceph-user user --ceph-key key | --ceph-root-password PW]
+                                    [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
+                                    [--sibench-skip-read-verification]
+                                    <description> <monitor> ...
+    benchmaster cephfs sibench time [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
+                                    [--sheet NAME] [-g FILE]
+                                    [--ceph-dir DIR] [--ceph-user USER --ceph-key KEY | --ceph-root-password PW]
+                                    [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
+                                    [--sibench-skip-read-verification]
+                                    <description> <monitor> ...
+    benchmaster block sibench time  [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
+                                    [--sheet NAME] [-g FILE]
+                                    [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
+                                    [--sibench-skip-read-verification]
+                                    <description> <block-device>
+    benchmaster file sibench time   [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
+                                    [--sheet NAME] [-g FILE]
+                                    [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
+                                    [--sibench-skip-read-verification]
+                                    <description> <file-dir>
+    benchmaster iscsi setup         [-v]
+                                    [--iscsi-image-size SIZE] [--iscsi-device-link LINK]
+                                    [--ceph-pool POOL] [--ceph-root-password PW]
+                                    [--sibench-servers SERVERS] [--sibench-root-password PW]
+                                    <gateway> ...
+    benchmaster iscsi teardown      [-v]
+                                    [--iscsi-device-link LINK]
+                                    [--ceph-pool POOL] [--ceph-root-password PW]
+                                    [--sibench-servers SERVERS] [--sibench-root-password PW]
+                                    <gateway> ...
+    benchmaster -h | --help
 
 Options:
     -h, --help                        Show usage
