@@ -10,6 +10,7 @@ with open('README.md') as readme_file:
 requirements = [
     'boto',
     'gspread',
+    'docopt',
 ]
 
 test_requirements = [ ]
