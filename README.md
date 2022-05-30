@@ -15,7 +15,6 @@ Running on a new machine:
 
 ```bash
 apt-get install python3-pip sshpass
-pip3 install boto gspread docopt
-
-./benchmaster.py --help
+pip3 install .
+benchmaster --help
 ```
