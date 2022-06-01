@@ -32,8 +32,8 @@ class Result:
     def columns():
         """ Returns an array of the column names we want for google sheets. """
         return ['ID', 'Protocol', 'Backend', 'Size', 'Object Pool', 'Workers', 'Schedule', 'Targets', 'Read/Write Mix',
-                'Wr Bandwidth Gb/s', 'Wr ResTime Min ms', 'Wr ResTime Max ms', 'Wr ResTime95 ms', 'Wr ResTimeAvg ms', 'Wr Successes', 'Wr Failures',
-                'Rd Bandwidth Gb/s', 'Rd ResTime Min ms', 'Rd ResTime Max ms', 'Rd ResTime95 ms', 'Rd ResTimeAvg ms', 'Rd Successes', 'Rd Failures',
+                'Wr Bandwidth', 'Wr ResTime Min', 'Wr ResTime Max', 'Wr ResTime95', 'Wr ResTimeAvg', 'Wr Successes', 'Wr Failures',
+                'Rd Bandwidth', 'Rd ResTime Min', 'Rd ResTime Max', 'Rd ResTime95', 'Rd ResTimeAvg', 'Rd Successes', 'Rd Failures',
                 'Description', 'Start', 'End']
 
 
@@ -62,11 +62,11 @@ class Result:
                 self.description, str(self.start_time), str(self.end_time)]
 
     def formats():
-        gb_s = "0.00 Gb\/\s"
+        mb_s = "0.00 \MB\/\s"
         ms = "0 \m\s"
         return [None, None, None, None, None, None, None, None, None,
-                gb_s, ms, ms, ms, ms, None, None,
-                gb_s, ms, ms, ms, ms, None, None,
+                mb_s, ms, ms, ms, ms, None, None,
+                mb_s, ms, ms, ms, ms, None, None,
                 None, None, None]
 
 

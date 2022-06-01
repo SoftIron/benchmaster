@@ -214,8 +214,8 @@ def _generate_xml(cv):
 
 
 def _gbits_format(num):
-    """ Turn bytes/s into gbits/s (with no unit added) """
-    num = (num * 8.0) / (1024.0 * 1024.0 * 1024.0)
+    """ Turn bytes/s into mbytes/s (with no unit added) """
+    num = num / (1024.0 * 1024.0)
     return "%.2f" % num
 
 

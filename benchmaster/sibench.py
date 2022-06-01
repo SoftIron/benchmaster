@@ -102,8 +102,8 @@ def run(spec):
 def _direction_result(analysis):
     """ Creates a DirectionResult object from an Analysis json object. """
 
-    # Bandwidth is in b/s, but we want Gb/s
-    bandwidth = analysis['Bandwidth'] / (1024 * 1024 * 1024)
+    # Bandwidth is in B/s, but we want MB/s
+    bandwidth = analysis['BandwidthBytes'] / (1024 * 1024)
 
     # Response times are in ns, but we want ms
     res_min = analysis['ResTimeMin'] / (1000 * 1000)
