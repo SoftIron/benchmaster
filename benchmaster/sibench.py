@@ -80,6 +80,8 @@ def run(spec):
     if spec.backend.skip_read_verification:
         cmd += ' --skip-read-verification'
 
+    cmd += ' --use-bytes'
+
     print("Running command: {}".format(cmd))
 
     # And now run it.
