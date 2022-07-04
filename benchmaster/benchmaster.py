@@ -320,12 +320,16 @@ def _fetch_ceph_key(mon, rootpw):
     """ Fetch a key from a monitor """
 
     print("Fetching key from {}:/etc/ceph/ceph.client.admin.keyring".format(mon))
-    cmd =  'sshpass -p ' + rootpw +' ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@' + mon 
-    cmd += " grep key /etc/ceph/ceph.client.admin.keyring | awk '{print $3}'"
+    import paramiko
+    client = paramiko.client.SSHClient()
+    client.set_missing_host_key_policy(paramiko.MissingHostKeyPolicy())
+    client.connect(mon, username='root', password=rootpw)
+    cmd = "grep key /etc/ceph/ceph.client.admin.keyring | awk '{print $3}'"
+    _, stdout, _ = client.exec_command(cmd)
 
-    rc = subprocess.run(cmd, shell=True, capture_output=True, check=True)
-    out = rc.stdout.decode("utf-8")
+    out = stdout.read().decode("utf-8")
     key = out[:-1]
+
 
     if key == '':
         print("Unable to fetch key: " + rc.stderr.decode('utf-8'))
