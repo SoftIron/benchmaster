@@ -325,11 +325,11 @@ def _fetch_ceph_key(mon, rootpw):
     client.set_missing_host_key_policy(paramiko.MissingHostKeyPolicy())
     client.connect(mon, username='root', password=rootpw)
     cmd = "grep key /etc/ceph/ceph.client.admin.keyring | awk '{print $3}'"
-    _, stdout, _ = client.exec_command(cmd)
+    _, stdout, stderr = client.exec_command(cmd)
     key = stdout.read().decode("utf-8").strip()
 
     if key == '':
-        print("Unable to fetch key: " + rc.stderr.decode('utf-8'))
+        print("Unable to fetch key: " + stderr.read().decode('utf-8'))
         exit(-1)
 
     print("Found key: {}".format(key))
