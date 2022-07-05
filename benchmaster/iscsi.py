@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import time
+import benchmaster.ssh as ssh
 
 class IscsiArgs:
     """ Master spec object. """
