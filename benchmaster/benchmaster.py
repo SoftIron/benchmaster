@@ -330,7 +330,9 @@ def _fetch_ceph_key(mon, rootpw):
 
     if key == '':
         print("Unable to fetch key: " + stderr.read().decode('utf-8'))
+        client.close()
         exit(-1)
+    client.close()
 
     print("Found key: {}".format(key))
     return key
