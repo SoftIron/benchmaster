@@ -119,6 +119,7 @@ import benchmaster.iscsi as iscsi
 import benchmaster.spreadsheet as spreadsheet
 import benchmaster.s3 as s3
 import benchmaster.spec as spec
+import benchmaster.ssh as ssh
 
 from docopt import docopt
 from datetime import datetime
@@ -320,24 +321,15 @@ def _fetch_ceph_key(mon, rootpw):
     """ Fetch a key from a monitor """
 
     print("Fetching key from {}:/etc/ceph/ceph.client.admin.keyring".format(mon))
-    import paramiko
-    client = paramiko.client.SSHClient()
-    client.set_missing_host_key_policy(paramiko.MissingHostKeyPolicy())
-    client.connect(mon, username='root', password=rootpw)
     cmd = "grep key /etc/ceph/ceph.client.admin.keyring | awk '{print $3}'"
-    _, stdout, stderr = client.exec_command(cmd)
-    key = stdout.read().decode("utf-8").strip()
+    key, err, rc = ssh.run_command(mon, 'root', rootpw, cmd)
 
     if key == '':
-        print("Unable to fetch key: " + stderr.read().decode('utf-8'))
-        client.close()
+        print("Unable to fetch key: " + err)
         exit(-1)
-    client.close()
 
     print("Found key: {}".format(key))
     return key
-
-
 
 
 def _handle_s3(args):
