@@ -1,9 +1,6 @@
 #!/usr/bin/python3
 
-import subprocess
 import time
-
-
 
 class IscsiArgs:
     """ Master spec object. """
@@ -19,10 +16,12 @@ class IscsiArgs:
 
 
 def _ssh_cmd(host, rootpw, cmd, check=True):
-    ssh_cmd = 'sshpass -p {} ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@{} {}'.format(rootpw, host, cmd)
-    print("Running SSH command: {}".format(ssh_cmd))
-    rc = subprocess.run(ssh_cmd, shell=True, capture_output=True, check=check)
-    return rc.stdout.decode('utf-8')
+    print("Running SSH command: {}".format(cmd))
+    out, err, rc = ssh.run_command(host, 'root', rootpw, cmd)
+    ssh_cmd = 'shpass -p {} ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@{} {}'.format(rootpw, host, cmd)
+    if rc != 0 and check:
+        print("Falied running command: " + err)
+    return out
      
 
 
