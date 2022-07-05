@@ -1,6 +1,7 @@
 import json
 import subprocess
 import sys
+import benchmaster.ssh as ssh
 
 
 def load_keys(filename):
@@ -20,20 +21,19 @@ def load_keys(filename):
 def add_user(username, keyfile, gateway, password):
     """ Adds a user to the rados gatweays, and writes the resulting key to s3.keys.
         We exit on failure. """
+    cmd = 'radosgw-admin user create --uid={} --display-name={}'.format(username, username)
+    out, err, rc = ssh.run_command(gateway, 'root', password, cmd)
 
-    cmd =  'sshpass -p ' + password
-    cmd += ' ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@' + gateway
-    cmd += ' radosgw-admin user create --uid={} --display-name={}'.format(username, username) 
+    if rc != 0:
+        print(f"Failed to create radosgw user: {err}")
+        exit(-1)
 
-    rc = subprocess.run(cmd, shell=True, capture_output=True, check=True)
-    out = rc.stdout.decode("utf-8")
-    
     # Try parsing the result
     try:
         data = json.loads(out)
         keys = data['keys'][0]
     except:
-        print("Unable to read parse keys from: " + data)
+        print("Unable to read parse keys from: " + out)
         exit(-1)
 
     # Write the result to a file
