@@ -326,10 +326,7 @@ def _fetch_ceph_key(mon, rootpw):
     client.connect(mon, username='root', password=rootpw)
     cmd = "grep key /etc/ceph/ceph.client.admin.keyring | awk '{print $3}'"
     _, stdout, _ = client.exec_command(cmd)
-
-    out = stdout.read().decode("utf-8")
-    key = out[:-1]
-
+    key = stdout.read().decode("utf-8").strip()
 
     if key == '':
         print("Unable to fetch key: " + rc.stderr.decode('utf-8'))
