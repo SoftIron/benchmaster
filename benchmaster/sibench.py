@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: 2022 SoftIron Limited <info@softiron.com>
-// SPDX-License-Identifier: GNU General Public License v2.0 only WITH Classpath exception 2.0
+# SPDX-FileCopyrightText: 2022 SoftIron Limited <info@softiron.com>
+# SPDX-License-Identifier: GNU General Public License v2.0 only WITH Classpath exception 2.0
+
 import json
 import benchmaster.spec as spec
 import subprocess
@@ -92,12 +93,20 @@ def run(spec):
     result = Result(spec)
     result.id = '-'
 
-    # We asked it to put the results in sibench.json, so let's grab that.
-    with open('sibench.json') as json_file:
-        data = json.load(json_file)
-        for a in data['Analyses']:
-            if a['Name'] == 'Total Read':   result.read = _direction_result(a)
-            if a['Name'] == 'Total Write':  result.write = _direction_result(a)
+    # We asked it to put the results in sibench.json, but that file may be HUGE as it records all the individual stats.
+    # We know that the Analyses section - the only bit we need - comes at the end, so we'll use grep to discard everything
+    # before that.
+
+    out = subprocess.check_output("grep Analyses -A 100000 sibench.json", shell=True).decode('utf-8')
+
+    # Add back in the leading brace that our grep has removed.
+    jout = "{\n" + out
+
+    # And we're good to load it as json
+    data = json.loads(jout)
+    for a in data['Analyses']:
+        if a['Name'] == 'Total Read':   result.read = _direction_result(a)
+        if a['Name'] == 'Total Write':  result.write = _direction_result(a)
 
     return result
 
