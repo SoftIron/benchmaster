@@ -77,7 +77,7 @@ Usage:
 Options:
     -h, --help                        Show usage
     -v, --verbose                     Show verbose output
-    -s, --object-size SIZE            Size oc the objects in the test                           sweepable  [default: 1M]
+    -s, --object-size SIZE            Size of the objects in the test                           sweepable  [default: 1M]
     -c, --object-count COUNT          Number of objects in the test                             sweepable  [default: 5000]
     -r, --run-time TIME               Seconds for the test (does not include ramp up/down)      sweepable  [default: 120]
     -u, --ramp-up TIME                Seconds at start of test where we do not record           sweepable  [default: 20]
