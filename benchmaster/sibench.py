@@ -30,7 +30,7 @@ def run(spec):
 
     # From here on we should be good, so let's build our command line to invoke sibench
 
-    cmd = '{} {} run -s{} -c{} -x{} -r{} -u{} -d{} -w{} -b{} -osibench.json --servers {} -p {}'.format(
+    cmd = '{} {} run -s{} -c{} -x{} -r{} -u{} -d{} -w{} -b{} --servers {} -p {}'.format(
             sibench_binary,
             protocol,
             spec.object_size,
