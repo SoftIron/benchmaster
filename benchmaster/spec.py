@@ -27,13 +27,14 @@ import benchmaster.sibench as sibench
 
 class Spec:
     """ Master spec object. """
-    def __init__(self, runtype, backend, protocol, object_size, object_count, read_write_mix, description):
+    def __init__(self, runtype, backend, protocol, object_size, object_count, read_write_mix, clean_up, description):
         self.runtype = runtype
         self.backend = backend
         self.protocol = protocol
         self.object_size = object_size
         self.object_count = object_count
         self.read_write_mix = read_write_mix
+        self.clean_up = clean_up
         self.description = description
 
     def __repr__(self): return str(vars(self))
@@ -47,7 +48,7 @@ class Spec:
                     for s in self.object_size.split(','):
                         for c in self.object_count.split(','):
                             for x in self.read_write_mix.split(','):
-                                results.append(Spec(r, b, p, s, c, x, self.description))
+                                results.append(Spec(r, b, p, s, c, x, self.clean_up, self.description))
         return results
 
 
@@ -187,12 +188,16 @@ class FileSpec:
 
 class SibenchSpec:
     """ Backend spec implementation for Sibench """
-    def __init__(self, port, servers, bandwidth, worker_factor, skip_read_verification):
+    def __init__(self, port, servers, bandwidth, worker_factor, skip_read_verification, generator, slice_dir, slice_count, slice_size):
         self.port = port
         self.servers = servers
         self.bandwidth = bandwidth
         self.worker_factor = worker_factor
         self.skip_read_verification = skip_read_verification
+        self.generator = generator
+        self.slice_dir = slice_dir
+        self.slice_count = slice_count
+        self.slice_size = slice_size
 
     def __repr__(self):     return str(vars(self))
     def name(self):         return "sibench"
@@ -200,7 +205,7 @@ class SibenchSpec:
         results = []
         for b in self.bandwidth.split(','):
             for w in self.worker_factor.split(','):
-                results.append(SibenchSpec(self.port, self.servers, b, w, self.skip_read_verification))
+                results.append(SibenchSpec(self.port, self.servers, b, w, self.skip_read_verification, self.generator, self.slice_dir, self.slice_count, self.slice_size))
         return results
 
 
