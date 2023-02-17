@@ -44,6 +44,12 @@ def run(spec):
             ','.join(spec.backend.servers),
             spec.backend.port)
 
+    if spec.backend.generator == 'slice':
+        cmd += ' -g slice --slice-dir {} --slice-count {} --slice-size {}'.format(
+                spec.backend.slice_dir,
+                spec.backend.slice_count,
+                spec.backend.slice_size)
+
     if spec.clean_up:
         cmd += ' --clean-up'
 
