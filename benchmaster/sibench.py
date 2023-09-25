@@ -29,7 +29,6 @@ def run(spec):
         exit(-1) 
 
     # From here on we should be good, so let's build our command line to invoke sibench
-
     cmd = '{} {} run -s{} -c{} -x{} -r{} -u{} -d{} -w{} -b{} -osibench.json --servers {} -p {}'.format(
             sibench_binary,
             protocol,
@@ -85,6 +84,9 @@ def run(spec):
 
     if spec.backend.skip_read_verification:
         cmd += ' --skip-read-verification'
+
+    if spec.backend.generator == 'slice':
+        cmd += ' -g slice --slice-dir {} --slice-count {} --slice-size {}'.format(spec.backend.slice_dir, spec.backend.slice_count, spec.backend.slice_size)
 
     cmd += ' --use-bytes'
 
