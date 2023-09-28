@@ -103,7 +103,7 @@ Options:
     --sibench-skip-read-verification  Disable read validation for speed.    
     --sibench-root-password PW        Root password for the sibench servers                                [default: linux]
     --sibench-generator GEN           Workload generator for sibench                                       [default: prng]
-    --sibench-slice-dir DIR           Directory for the corpus if using the slice generator
+    --sibench-slice-dir DIR           Directory for the corpus if using the slice generator                [default: /home/sibench/corpus]
     --sibench-slice-size SIZE         Size of slices if using the slice generator                          [default: 4096]
     --sibench-slice-count COUNT       Number of slices if using the slice generator                        [default: 1000]
     --s3-credentials FILE             File containing S3 keys                                              [default: s3creds.json]
@@ -201,7 +201,6 @@ def _run_sweep(args):
     for s in spec.flatten():
         # Use json as a convenient way to pretty print a heirarchical class structure.
         jstr = str(s).replace("'", '"').replace('False', 'false').replace('True', 'true')
-        print(jstr)
         print("Running Benchmark:\n" + json.dumps(json.loads(jstr), indent=3))
         _run_single(args, s)
     exit(0)
