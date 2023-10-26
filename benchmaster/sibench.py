@@ -123,11 +123,11 @@ def _direction_result(analysis):
     # Bandwidth is in B/s, but we want MB/s
     bandwidth = analysis['BandwidthBytes'] / (1024 * 1024)
 
-    # Response times are in ns, but we want ms
-    res_min = analysis['ResTimeMin'] / (1000 * 1000)
-    res_max = analysis['ResTimeMax'] / (1000 * 1000)
-    res_95 = analysis['ResTime95'] / (1000 * 1000)
-    res_avg = analysis['ResTimeAvg'] / (1000 * 1000)
+    # Response times are in microseconds, but we want milliseconds
+    res_min = analysis['ResTimeMin'] / 1000
+    res_max = analysis['ResTimeMax'] / 1000
+    res_95 = analysis['ResTime95'] / 1000
+    res_avg = analysis['ResTimeAvg'] / 1000
 
     successes = analysis['Successes']
     failures = analysis['Failures']
