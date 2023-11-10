@@ -24,7 +24,7 @@ Usage:
                                     [--s3-bucket BUCKET] [--s3-credentials FILE] [--s3-port PORT]
                                     [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
                                     [--sibench-generator GEN] [--sibench-slice-dir DIR] [--sibench-slice-size SIZE] [--sibench-slice-count COUNT]
-                                    [--sibench-skip-read-verification] [--clean-up]
+                                    [--sibench-skip-read-verification] [--sibench-script SCRIPT] [--clean-up]
                                     <description> <gateway> ...
     benchmaster rados cosbench ops  [-v] [-s SIZE] [-c COUNT] [-x MIX]
                                     [--sheet NAME] [-g FILE]
@@ -41,33 +41,33 @@ Usage:
                                     [--ceph-pool POOL] [--ceph-user user --ceph-key key | --ceph-root-password PW]
                                     [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
                                     [--sibench-generator GEN] [--sibench-slice-dir DIR] [--sibench-slice-size SIZE] [--sibench-slice-count COUNT]
-                                    [--sibench-skip-read-verification] [--clean-up]
+                                    [--sibench-skip-read-verification] [--sibench-script SCRIPT] [--clean-up]
                                     <description> <monitor> ...
     benchmaster rbd sibench time    [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
                                     [--sheet NAME] [-g FILE]
                                     [--ceph-pool POOL] [--ceph-datapool POOL] [--ceph-user user --ceph-key key | --ceph-root-password PW]
                                     [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
                                     [--sibench-generator GEN] [--sibench-slice-dir DIR] [--sibench-slice-size SIZE] [--sibench-slice-count COUNT]
-                                    [--sibench-skip-read-verification] [--clean-up]
+                                    [--sibench-skip-read-verification] [--sibench-script SCRIPT] [--clean-up]
                                     <description> <monitor> ...
     benchmaster cephfs sibench time [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
                                     [--sheet NAME] [-g FILE]
                                     [--ceph-dir DIR] [--ceph-user USER --ceph-key KEY | --ceph-root-password PW]
                                     [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
                                     [--sibench-generator GEN] [--sibench-slice-dir DIR] [--sibench-slice-size SIZE] [--sibench-slice-count COUNT]
-                                    [--sibench-skip-read-verification] [--clean-up]
+                                    [--sibench-skip-read-verification] [--sibench-script SCRIPT] [--clean-up]
                                     <description> <monitor> ...
     benchmaster block sibench time  [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
                                     [--sheet NAME] [-g FILE]
                                     [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
                                     [--sibench-generator GEN] [--sibench-slice-dir DIR] [--sibench-slice-size SIZE] [--sibench-slice-count COUNT]
-                                    [--sibench-skip-read-verification] [--clean-up]
+                                    [--sibench-skip-read-verification] [--sibench-script SCRIPT] [--clean-up]
                                     <description> <block-device>
     benchmaster file sibench time   [-v] [-s SIZE] [-c COUNT] [-r TIME] [-u TIME] [-d TIME] [-x MIX]
                                     [--sheet NAME] [-g FILE]
                                     [--sibench-workers FACTOR] [--sibench-port PORT] [--sibench-bandwidth BW] [--sibench-servers SERVERS]
                                     [--sibench-generator GEN] [--sibench-slice-dir DIR] [--sibench-slice-size SIZE] [--sibench-slice-count COUNT]
-                                    [--sibench-skip-read-verification] [--clean-up]
+                                    [--sibench-skip-read-verification] [--sibench-script SCRIPT] [--clean-up]
                                     <description> <file-dir>
     benchmaster iscsi setup         [-v]
                                     [--iscsi-image-size SIZE] [--iscsi-device-link LINK]
@@ -106,6 +106,7 @@ Options:
     --sibench-slice-dir DIR           Directory for the corpus if using the slice generator                [default: /home/sibench/corpus]
     --sibench-slice-size SIZE         Size of slices if using the slice generator                          [default: 4096]
     --sibench-slice-count COUNT       Number of slices if using the slice generator                        [default: 1000]
+    --sibench-script SCRIPT           Script to be run at key events in a phase by sibench                 [default: none]
     --s3-credentials FILE             File containing S3 keys                                              [default: s3creds.json]
     --s3-port PORT                    The port on which to connect to the S3 gateways                      [default: 7480]
     --s3-bucket BUCKET                The bucket to use to on S3                                           [default: benchmark]
@@ -263,7 +264,8 @@ def _make_backend_spec(args):
             args['--sibench-generator'],
             args['--sibench-slice-dir'],
             args['--sibench-slice-count'],
-            args['--sibench-slice-size'])
+            args['--sibench-slice-size'],
+            args['--sibench-script'])
 
     print("Not a known backend")
     exit(-1)

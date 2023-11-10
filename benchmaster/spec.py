@@ -188,7 +188,7 @@ class FileSpec:
 
 class SibenchSpec:
     """ Backend spec implementation for Sibench """
-    def __init__(self, port, servers, bandwidth, worker_factor, skip_read_verification, generator, slice_dir, slice_count, slice_size):
+    def __init__(self, port, servers, bandwidth, worker_factor, skip_read_verification, generator, slice_dir, slice_count, slice_size, script):
         self.port = port
         self.servers = servers
         self.bandwidth = bandwidth
@@ -198,6 +198,7 @@ class SibenchSpec:
         self.slice_dir = slice_dir
         self.slice_count = slice_count
         self.slice_size = slice_size
+        self.script = script
 
     def __repr__(self):     return str(vars(self))
     def name(self):         return "sibench"
@@ -213,7 +214,8 @@ class SibenchSpec:
                                            self.generator, 
                                            self.slice_dir, 
                                            self.slice_count, 
-                                           self.slice_size))
+                                           self.slice_size,
+                                           self.script))
         return results
 
 
